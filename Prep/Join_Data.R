@@ -52,7 +52,8 @@ all_grid <- expand.grid(fips = all_fips_table$fips, yearday = all_dates, alert_t
 waze_df <- left_join(all_grid, waze, by = c('fips', 'yearday', 'alert_type'))
 waze_df[is.na(waze_df)] = 0
 
-# Use left join instead of full join here. This limits the data to when we have Waze alert data, which will lag behind NYT covid data currently by several days.
+# Use left join instead of full join here. This limits the data to when we have Waze alert data, which will lag behind NYT covid data currently by several days. 
+# Note also that covid cases data will be repeated for each fips x date x alert_type combination. Could instead  make waze_df wide first, then join.
 df <- left_join(waze_df, covid,
                 by = c('yearday' = 'date',
                        'fips' = 'fips'))

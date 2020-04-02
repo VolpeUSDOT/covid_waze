@@ -15,7 +15,9 @@ require(pROC)
 
 # formula - If provided, use this formula instead of the automatically generated one for the random forest model
 
-# test.dat - If provided, this will be used to test the random forest model. If not provided, a split of the training data will be used according to the test.split argument. Both test.dat and test.split cannot be provided.
+# test.dat - If provided, this will be used to test the random forest model. If not provided, a split of the training data will be used according to the test.split argument. Both test.dat and test.split cannot be provided. 
+
+# pred.dat - If provided, generates predicted values for a new set of data (i.e., 2020 Waze counts for covid_waze project)
 
 # test.split - if test.dat is not specified, use this to randomly split the training data into two portions by row, with this split value being used as the test proportion of the data.
 
@@ -23,12 +25,17 @@ require(pROC)
 
 # thin.dat - value from 0 to 1 for proportion of the training and test data to use in fitting the model. E.g. thin.dat = 0.2, use only 20% of the training and test data; useful for testing new features. 
 
+# s3_save - flag for saving to an S3 bucket. Set to FALSE to run on local machines outside of SDC
+
 do.rf <- function(train.dat, omits, response.var = "count", model.no,
-                  test.dat = NULL, test.split = .30,
+                  test.dat = NULL, 
+                  pred.dat = NULL,
+                  test.split = .30,
                   split.by = NULL,
                   thin.dat = NULL,
                   cutoff = c(0.8, 0.2),
-                  rf.inputs = list(ntree.use = 500, avail.cores = 4, mtry = NULL, maxnodes = NULL, nodesize = 5)){
+                  rf.inputs = list(ntree.use = 500, avail.cores = 4, mtry = NULL, maxnodes = NULL, nodesize = 5),
+                  s3_save = FALSE){
   
   if(!is.null(test.dat) & !missing(test.split)) stop("Specify either test.dat or test.split, but not both")
 
@@ -55,7 +62,6 @@ do.rf <- function(train.dat, omits, response.var = "count", model.no,
       test.dat <- test.dat[sample(1:nrow(test.dat), size = nrow(test.dat)*thin.dat),]
     }
   }
-  
   
   # 70:30 split or Separate training and test data
   # Adding options to split by day or by week. Assumes column hextime is available and is a character vector in POSIX format
@@ -100,14 +106,8 @@ do.rf <- function(train.dat, omits, response.var = "count", model.no,
   cat(round(timediff,2), attr(timediff, "unit"), "to fit model", model.no, "\n")
   # End RF in parallel
 
-  Nobs <- data.frame(nrow(rundat),
-                     sum(as.numeric(as.character(rundat[,response.var])) == 0),
-                     sum(as.numeric(as.character(rundat[,response.var])) > 0),
-                     length(rundat$nWazeAccident[train.dat$nWazeAccident>0]) )
-  
-  colnames(Nobs) = c("N", "No Crash", "Crash present", "Waze accident present")
-  
-  # Begin if factor response variable  
+  # Begin if factor response variable
+  # ! Note: this is left over from SDI Waze. Not updated for covid_waze since we are using numeric response
   if(class(rundat[,response.var])=="factor"){
     rf.pred <- predict(rf.out, test.dat.use[fitvars], cutoff = cutoff)
     rf.prob <- predict(rf.out, test.dat.use[fitvars], type = "prob", cutoff = cutoff)
@@ -153,38 +153,35 @@ do.rf <- function(train.dat, omits, response.var = "count", model.no,
   
   # Begin if continuous response variable  
   if(class(rundat[,response.var])=="numeric"){
-    rf.prob <- predict(rf.out, test.dat.use[fitvars])
-
-    rf.pred <- cut(rf.prob, breaks = c(-100, cutoff[2], 100), include.lowest = T, labels = c("NoCrash","Crash"))
-
-    out.df <- data.frame(test.dat.use[, c("GRID_ID", "Year", "day", "hour", response.var)], rf.pred, rf.prob)
-    out.df$day <- as.numeric(out.df$day)
-    names(out.df)[5:7] <- c("Obs", "Pred", "Prob.Crash")
-    out.df = data.frame(out.df,
-                        TN = out.df$Obs == 0 &  out.df$Pred == "NoCrash",
-                        FP = out.df$Obs == 0 &  out.df$Pred == "Crash",
-                        FN = out.df$Obs == 1 &  out.df$Pred == "NoCrash",
-                        TP = out.df$Obs == 1 &  out.df$Pred == "Crash")
     
+    # use test.dat.use for predictions if no pred.dat provided
+    if(is.null(pred.dat)){
+      pred.dat = test.dat.use
+    }
+    rf.pred <- predict(rf.out, pred.dat[fitvars])
+
+    out.df <- data.frame(pred.dat, pred_count = rf.pred)
     
   } # end if continuous response variable
   
   write.csv(out.df,
-            file = file.path(outputdir, paste(model.no, "RandomForest_pred.csv", sep = "_")),
+            file = file.path(output.loc, paste(model.no, "RandomForest_pred.csv", sep = "_")),
             row.names = F)
   
-  savelist = c("rf.out", "rf.pred", "rf.prob", "out.df") 
+  savelist = c("rf.out", "rf.pred", "out.df") 
   if(is.null(test.dat)) savelist = c(savelist, "testrows", "trainrows")
   if(!is.null(thin.dat)) savelist = c(savelist, "test.dat.use")
   
-  fn = paste(state, "Model", model.no, "RandomForest_Output.RData", sep= "_")
+  fn = paste(model.no, "RandomForest_Output.RData", sep= "_")
   
-  save(list = savelist, file = file.path(outputdir, fn))
+  save(list = savelist, file = file.path(output.loc, fn))
   
   # Copy to S3
-  system(paste("aws s3 cp",
-               file.path(outputdir, fn),
-               file.path(teambucket, state, "RandomForest_Output", fn)))
+  if(s3_save){
+    system(paste("aws s3 cp",
+                 file.path(output.loc, fn),
+                 file.path(teambucket, state, "RandomForest_Output", fn)))
+  }
   
   # Output is list of three elements: Nobs data frame, predtab table, binary model diagnotics table, and mean squared error
   if(class(rundat[,response.var])=="factor"){
@@ -196,7 +193,7 @@ do.rf <- function(train.dat, omits, response.var = "count", model.no,
     ) 
   }    
   if(class(rundat[,response.var])=="numeric"){
-  outlist =  list(Nobs, 
+  outlist =  list(Nobs_fit = nrow(rundat), Nobs_test = nrow(test.dat.use), 
          mse = mean(as.numeric(as.character(test.dat.use[,response.var])) - 
                       as.numeric(rf.prob))^2,
          runtime = timediff
@@ -206,32 +203,6 @@ do.rf <- function(train.dat, omits, response.var = "count", model.no,
 } # end do.rf function
 
 
-
-# # Model 01
-# # Test arguments
-# # Variables to test. Use Waze only predictors, and omit grid ID and day as predictors as well. Here also omitting precipitation and neighboring grid cells
-# # Omit as predictors in this vector:
-# omits = c(grep("GRID_ID", names(w.04), value = T), "day", "hextime", "year", "weekday",
-#           "uniqWazeEvents", "nWazeRowsInMatch", "nWazeAccident",
-#           "nMatchWaze_buffer", "nNoMatchWaze_buffer",
-#           grep("EDT", names(w.04), value = T),
-#           "wx",
-#           grep("nWazeAcc_", names(w.04), value = T), # neighboring accidents
-#           grep("nWazeJam_", names(w.04), value = T) # neighboring jams
-#           )
-# 
-# modelno = "01"
-# train.dat = w.04[sample(1:nrow(w.04), size = 10000),]
-# test.dat = NULL
-# response.var = "MatchEDT_buffer_Acc"
-# rf.inputs = list(ntree.use = avail.cores * 50, avail.cores = avail.cores, mtry = NULL, maxnodes = NULL)
-# 
-# do.rf(train.dat = w.04, omits, response.var = "MatchEDT_buffer_Acc", 
-#       model.no = "01", rf.inputs = rf.inputs) 
-
-# Function to re-assess model predictions and diagnostics for an already-fit model ----
-# To do: validate using testrows and training rows from previous model runs
-# To do: For SDC, change s3load to system(aws s3 cp) etc, since aws.s3 package won't work on SDC
 
 reassess.rf <- function(train.dat, omits, response.var = "MatchEDT_buffer_Acc", model.no,
                         test.dat = NULL,

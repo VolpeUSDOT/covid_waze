@@ -6,6 +6,11 @@
 # covid: NYT counts of cases by county and day
 # Declarations: TBD
 
+# Handling NA's:
+# NA values may occur because no incidents happened in that hour, or because no data was flowing.
+# Propose to fill 0's for these cases: at least one alert type had some record during that hour, for that county. OR at least one alert type had some record for that day, for that county.
+# Otherwise, keep as NA, because represents no data flow rather than true zero
+
 # setup ----
 library(tidyverse)
 library(usmap)
@@ -25,8 +30,7 @@ waze <- compiled_counts # rename for ease
 
 # Covid
 # Refresh data source. Assumes you have cloned nytimes/covid-19-data
-# Check this, seems to work
-system(paste0('cd ', git_dir, '/covid-19-data/', '; git pull'))
+system(paste0('git -C ', git_dir, '/covid-19-data/ pull'))
 
 covid <- read.csv(file.path(git_dir, 'covid-19-data', 'us-counties.csv'), stringsAsFactors = F)
 
@@ -41,7 +45,8 @@ waze <- waze %>%
   summarize(count = sum(count))
 
 # Fill in all county and state names using usmap package
-all_fips <- unique(df$fips)
+all_fips <- sort(unique(c(waze$fips, covid$fips)))
+all_fips <- all_fips[!grepl('NA', all_fips)]
 all_fips_table <- fips_info(all_fips)
 
 # Not all counties are represented for all days. Need to expand grid to include all US counties, to accurately represent 0's
@@ -50,11 +55,28 @@ all_types <- unique(waze$alert_type[!is.na(waze$alert_type)])
 all_grid <- expand.grid(fips = all_fips_table$fips, yearday = all_dates, alert_type = all_types)
 
 waze_df <- left_join(all_grid, waze, by = c('fips', 'yearday', 'alert_type'))
-waze_df[is.na(waze_df)] = 0
+
+# waze_df[is.na(waze_df)] = 0
+# Fill zeros correctly ----
+# Within a county, if any alert_type over that day is not NA, then fill the others with 0
+# Otherwise, leave as NA
+
+# Identify days where at least one value is filled in for this county.
+# When true, this means we should fill 0 for any NA values on that day
+not_all_na_days <- waze_df %>% 
+  group_by(fips, yearday) %>%
+  summarize(one_not_NA = !all(is.na(count)))
+
+waze_df_filled <- waze_df %>%
+  left_join(not_all_na_days, by = c('fips', 'yearday')) %>%
+  mutate(count_filled = ifelse(is.na(count) & one_not_NA == TRUE, 0, 
+                               ifelse(!is.na(count), count,
+                                      NA)))
 
 # Use left join instead of full join here. This limits the data to when we have Waze alert data, which will lag behind NYT covid data currently by several days. 
 # Note also that covid cases data will be repeated for each fips x date x alert_type combination. Could instead  make waze_df wide first, then join.
-df <- left_join(waze_df, covid,
+df <- left_join(waze_df_filled %>% select(-one_not_NA, -count) %>% rename(count = count_filled), 
+                covid,
                 by = c('yearday' = 'date',
                        'fips' = 'fips'))
 
@@ -68,11 +90,24 @@ df <- df %>%
 df <- df %>%
   rename(state = abbr)
 
-# Fill NA with zeros
-df[is.na(df)] = 0
+# For covid-19 cases and deaths, fill zeros from the first date detected nationwide. Otherwise, leave as NA
+first_covid_day = min(df$yearday[!is.na(df$cases)])
+
+df_f <- df %>%
+  mutate(cases_filled = ifelse(yearday >= first_covid_day & is.na(cases), 0, 
+                               ifelse(!is.na(cases), cases, NA)),
+         deaths_filled = ifelse(yearday >= first_covid_day & is.na(deaths), 0, 
+                                ifelse(!is.na(deaths), deaths, NA))
+         )
+  
+# head(df_f); tail(df_f) # confirm this worked as expected
+
+df <- df_f %>%
+  select(-cases, -deaths) %>%
+  rename(cases = cases_filled,
+         deaths = deaths_filled)
 
 # organize date and time variables
-
 df <- df %>%
   mutate(date = as.POSIXct(yearday, format = "%Y-%m-%d", tz = "UTC"),
          year = format(date, "%Y"),
@@ -98,3 +133,5 @@ write.csv(df, file = 'Data/Waze_Covid_joined.csv', row.names = F)
 
 save(df_rc, file = 'Data/Waze_Covid_joined_rc.RData')
 write.csv(df_rc, file = 'Data/Waze_Covid_joined_rc.csv', row.names = F)
+
+# Copy to covid_waze/Data folder on Box when complete

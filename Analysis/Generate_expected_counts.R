@@ -6,8 +6,42 @@
 
 # setup ----
 library(tidyverse)
-library(lmer) # for glmer models of Poisson counts, with county as random effect
+library(lubridate)
+# library(lmer) # for glmer models of Poisson counts, with county as random effect
 library(randomForest) # for random forest models of counts for comparison (maybe)
+library(foreach)
+library(doParallel)
+
+source('Analysis/RandomForest_WazeGrid_Fx.R')
 
 load('Data/Waze_Covid_joined.RData')
+output.loc = 'Output'
 
+
+#Use day of week (not day of year) to capture weekend/weekday patterns 
+df$date_weekday <- as.Date(df$date)
+df$day_week <- wday(ymd(df$date_weekday),label = TRUE, abbr = FALSE)
+df$weekend <- df$day_week == "Saturday" | df$day_week == "Sunday" 
+
+
+#Save week of year
+df$week_year <- week(df$date)
+
+# Model expected counts ----
+omits = c("alert_type",
+          "county",
+          "cases",
+          "deaths",
+          "yearday",
+          "date",
+          "date_weekday",
+          "week_year")
+
+# Will use fips, state, year, month, dow, day_week, and weekend as predictors. Will use count as response.
+
+model.no = "crash_01"
+
+crash_dat <- df %>%
+  filter(alert_type == "ACCIDENT") 
+
+cra_mod <- do.rf(crash_dat)

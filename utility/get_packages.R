@@ -1,11 +1,15 @@
 # Get all necessary packages across data prep and analysis scripts 
+# add any packages your scripts require here. Keep in alphabetical order.
 
 loadpacks <- c(
+  "doParallel",
+  "foreach",
   "kableExtra",
   "knitr",
   "lmer",
-  "plotly",
-   "tidyverse",
+# "plotly",
+  "randomForest",
+  "tidyverse",
   "usmap"
   )
 

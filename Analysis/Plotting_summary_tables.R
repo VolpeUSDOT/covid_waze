@@ -85,13 +85,13 @@ ggsave(gpall,
 gp4 <- ggplot(df_s %>% filter(year == '2020' & month %in% c('01', '02', '03')), aes(x = date, y = count, color = alert_type)) +
   geom_point(alpha = 0.2) +
   geom_smooth() +
-  ylim(c(0, 6000)) +
+#  ylim(c(0, 6000)) +
   facet_wrap(~county, nrow = length(select_counties), scale = 'free_y') +
-  ggtitle('2020')  +
+  ggtitle('2020 \n covid-19 case counts in black')  +
   geom_line(aes(x = date, y = cases),
             size = 2,
             color = 'black')
 
-ggsave(gpall, 
-       file = file.path(output.loc, 'Example_compare_time_series_plots.jpeg'),
+ggsave(gp4, 
+       file = file.path(output.loc, 'Example_compare_time_series_plots_with_cases.jpeg'),
        width = 8, height = 8)

@@ -198,7 +198,7 @@ for(statex in unique(df$state)[!unique(df$state) %in% c('DC')]){
   
 }
 
-# Organize colums. Simplify the date columns
+# Organize columns. Simplify the date columns
 compiled_pred <- compiled_pred %>%
   select(-date, -date_weekday) %>%
   rename(date = yearday)

@@ -186,8 +186,8 @@ do.rf <- function(train.dat, omits, response.var = "count", model.no,
   # Output is list of three elements: Nobs data frame, predtab table, binary model diagnotics table, and mean squared error
   if(class(rundat[,response.var])=="factor"){
   outlist =  list(Nobs, predtab, diag = bin.mod.diagnostics(predtab), 
-         mse = mean(as.numeric(as.character(test.dat.use[,response.var])) - 
-                      as.numeric(rf.prob[,"1"]))^2,
+         mse = mean(c(as.numeric(as.character(test.dat.use[,response.var])) - 
+                      as.numeric(rf.prob[,"1"]))^2),
          runtime = timediff,
          auc = as.numeric(model_auc) # do not save complete output
     ) 
@@ -195,7 +195,7 @@ do.rf <- function(train.dat, omits, response.var = "count", model.no,
   if(class(rundat[,response.var])=="numeric"){
   outlist =  list(Nobs_fit = nrow(rundat), Nobs_test = nrow(test.dat.use), 
          mse = mean(as.numeric(as.character(test.dat.use[,response.var])) - 
-                      as.numeric(rf.prob))^2,
+                      as.numeric(rf.out$predicted))^2,
          runtime = timediff
     )
   }

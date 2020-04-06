@@ -27,10 +27,19 @@ compiled_pred_w <- compiled_pred %>%
 # Impact: percent decrease in activity compared to expected (pred_count)
 
 compiled_pred_w <- compiled_pred_w %>%
-  mutate(impact_crash =  ( (pred_count_ACCIDENT - count_ACCIDENT) / pred_count_ACCIDENT ),
-         impact_weh =  ((pred_count_WEATHERHAZARD - count_WEATHERHAZARD) / pred_count_WEATHERHAZARD ),
-         impact_jam =  ((pred_count_JAM - count_JAM) / pred_count_JAM )
+  mutate(impact_crash = (( pred_count_ACCIDENT - count_ACCIDENT) / pred_count_ACCIDENT ),
+         impact_weh =   (( pred_count_WEATHERHAZARD - count_WEATHERHAZARD) / pred_count_WEATHERHAZARD ),
+         impact_jam =   (( pred_count_JAM - count_JAM) / pred_count_JAM )
          )
+
+# Outlier filtering ----
+# Within county, omit any values for observed count_* which are > 2 s.d. above mean of count_* in that county in 2020
+# drop in Box with _filtered.csv for Michelle to use
+
+# Google style ----
+# just use median counts for previous 5 weeks from Jan 3 - Feb 6
+# Michelle will do this in Tableau
+
 
 # This is the average decrease in activity. 
 # Multiply by -1 to make the sign logical:

@@ -1,17 +1,48 @@
-# Calculate a measure of impact from difference between observed and expected counts
+# Generate historical mean data for Tableau Dashboard of Waze / Covid case data 
+# Mean historical (2017-2019) Waze counts and Baseline 2020 values
+# Calculate a measure of impact from difference between observed and expected (modeled) counts
 # Plot and summarize this impact index
 # Reference covid-19 cases and disaster declarations as interpreting factors in the change in impact index
 
-
 # setup ----
 library(tidyverse)
+library(egg)
+library(lubridate)
 
 output.loc = 'Output'
 
 load('Data/Waze_Covid_joined.RData')
-load(file.path(output.loc, 'Waze_2020_Predicted_Observed.RData'))
+load(file.path(output.loc, 'Waze_2020_Predicted_Observed_Index.RData'))
 
-# Calculating impact ----
+#  Generate expected values by county/day for 2020 based on 2018 and 2019 data----
+#Use day of week (not day of year) to capture weekend/weekday patterns 
+df$date_weekday <- as.Date(df$date)
+df$day_week <- wday(ymd(df$date_weekday),label = TRUE, abbr = FALSE)
+
+#2017-2019 mean values - county level averages by month and dow
+df_no2020 <- filter(df, year != "2020")
+waze_avg <- df_no2020 %>%
+  group_by(alert_type, fips, state, county, month, day_week) %>%
+  summarise(hist_mean = round(mean(count, na.rm=TRUE),1),
+            hist_median = round(median(count, na.rm=TRUE),1),
+            hist_sd = round(sd(count, na.rm=TRUE),1),
+            hist_n = n())
+
+#2020 baseline values - county level averages by day of week for Jan 5th-Feb 8th, 2020----
+df_bl2020 <- filter(df, year == "2020" & date >= "2020-01-05" & date <= "2020-02-08" )
+waze_bl2020 <- df_bl2020 %>%
+  group_by(alert_type, fips, state, county, day_week) %>%
+  summarise(bl2020_mean = round(mean(count, na.rm=TRUE),1), 
+            bl2020_median = round(median(count, na.rm=TRUE),1), 
+            bl2020_sd = round(sd(count, na.rm=TRUE),1), 
+            bl2020_n = n())
+
+#Merge historical means by month and day of week (2017-2019) and 2020 baseline values to give different options for calculating response indices.
+
+#write.csv(waze_avg, file=file.path(output.loc,"waze_avg_counts.csv"), row.names=FALSE)
+
+
+# Calculating impact for modeled results----
 
 # 1. Collapse to a single day per county
 # 2. Pivot to wide the counts of observed alerts and predicted counts of alerts

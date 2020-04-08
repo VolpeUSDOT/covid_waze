@@ -95,6 +95,7 @@ waze_avg_w <- waze_avg %>%
   pivot_wider(names_from = alert_type,
               values_from = c(hist_mean, hist_median, hist_sd))
 
+#join historical mean data to waze indices file 
 Waze2020_indices <- compiled_pred_w %>% 
   left_join(waze_avg_w, by = c('fips'='fips', 'month' = 'month_int', 'day_week'='day_week_ch'))
 
@@ -107,10 +108,11 @@ waze_bl2020_w <- waze_bl2020 %>%
   pivot_wider(names_from = alert_type,
               values_from = c(bl2020_mean, bl2020_median, bl2020_sd))
 
+#join baseline data to waze indices file 
 Waze2020_indices <- Waze2020_indices %>% 
   left_join(waze_bl2020_w, by = c('fips'='fips', 'day_week'='day_week_ch'))
 
-#Calculate differences in redicted values and historical means
+#Calculate differences in predicted values and historical means
 
 Waze2020_indices$pred_hist_JAM_diff <- Waze2020_indices$pred_count_JAM - Waze2020_indices$hist_mean_JAM
 

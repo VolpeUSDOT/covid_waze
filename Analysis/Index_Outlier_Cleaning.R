@@ -70,7 +70,20 @@ Waze2020_indices$pred_count_ACCIDENT[pred_ACC_threshold] <- 0
 Waze2020_indices$pred_count_JAM[pred_JAM_threshold] <- 0
 Waze2020_indices$pred_count_WEATHERHAZARD[pred_WEH_threshold] <- 0
 
-#re-calculate impact factors with thresholded values
+#re-calculate impact factors with thresholded values----
+Waze2020_indices <- Waze2020_indices %>%
+  mutate(impact_crash_th = (( count_ACCIDENT - pred_count_ACCIDENT) / pred_count_ACCIDENT ),
+         impact_weh_th =   (( count_WEATHERHAZARD - pred_count_WEATHERHAZARD) / pred_count_WEATHERHAZARD ),
+         impact_jam_th =   (( count_JAM - pred_count_JAM) / pred_count_JAM )
+  )
+
+# This is the average decrease in activity.
+# Use total instead of average? Or weighted average?
+impact_index_th = ( rowSums(Waze2020_indices[,c('impact_crash_th',
+                                            'impact_weh_th',
+                                            'impact_jam_th')]) / 3 )
+
+Waze2020_indices <- data.frame(Waze2020_indices, impact_index_th)
 
 
 # Histograms by day of week
@@ -78,16 +91,3 @@ ggplot(Waze2020_indices) +
   geom_histogram(aes(count_JAM)) + 
   scale_x_log10() +
   facet_wrap(~day_week)
-
-#Ideas to test----
-# Note: biggest impacts are when predicted values are small, so you're dividing by a small value (e.g., 0.02) 
-# When the observed value is 0, and predicted value is greater than 0 you get an impact of -1
-
-# Outlier filtering ----
-# Within county, omit any values for observed count_* which are > 2 s.d. above mean of count_* in that county in 2020
-# drop in Box with _filtered.csv for Michelle to use
-
-# Google style ----
-# Use median counts for previous 5 weeks from Jan 3 - Feb 6
-# 2020 Baseline values are now included in data file 
-

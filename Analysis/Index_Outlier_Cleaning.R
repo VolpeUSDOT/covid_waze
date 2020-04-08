@@ -133,10 +133,10 @@ impact_index_rnd = ( rowSums(Waze2020_indices[,c('impact_crash_rnd',
 Waze2020_indices <- data.frame(Waze2020_indices, impact_index_rnd)
 
 # Save -----
-save(file = file.path(output.loc, 'Waze_2020_Predicted_Observed_Index.RData'),
+save(file = file.path(output.loc, 'Waze_2020_Index_cleaned.RData'),
      list = c('Waze2020_indices'))
 
-write.csv(Waze2020_indices, file = file.path(output.loc, 'Waze_2020_Predicted_Observed_Index.csv'), row.names = F)
+write.csv(Waze2020_indices, file = file.path(output.loc, 'Waze_2020_Index_cleaned.csv'), row.names = F)
 
 
 # Histograms by day of week

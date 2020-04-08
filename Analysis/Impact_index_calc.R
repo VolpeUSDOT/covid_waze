@@ -15,7 +15,7 @@ output.loc = 'Output'
 load('Data/Waze_Covid_joined.RData')
 load(file.path(output.loc, 'Waze_2020_Predicted_Observed_Index.RData'))
 
-#  Generate expected values by county/day for 2020 based on 2018 and 2019 data----
+#  Generate expected values by county/day for 2020 based on 2018 and 2019 data ----
 #Use day of week (not day of year) to capture weekend/weekday patterns 
 df$date_weekday <- as.Date(df$date)
 df$day_week <- wday(ymd(df$date_weekday),label = TRUE, abbr = FALSE)
@@ -29,9 +29,9 @@ waze_avg <- df_no2020 %>%
             hist_sd = round(sd(count, na.rm=TRUE),1),
             hist_n = n())
 
-write.csv(waze_avg, file=file.path(output.loc,"waze_avg_counts.csv"), row.names=FALSE)
+write.csv(waze_avg, file = file.path(output.loc, "waze_avg_counts.csv"), row.names=FALSE)
 
-#2020 baseline values - county level averages by day of week for Jan 5th-Feb 8th, 2020----
+# 2020 baseline values - county level averages by day of week for Jan 5th-Feb 8th, 2020 ----
 df_bl2020 <- filter(df, year == "2020" & date >= "2020-01-05" & date <= "2020-02-08" )
 waze_bl2020 <- df_bl2020 %>%
   group_by(alert_type, fips, state, county, day_week) %>%
@@ -40,7 +40,7 @@ waze_bl2020 <- df_bl2020 %>%
             bl2020_sd = round(sd(count, na.rm=TRUE),1), 
             bl2020_n = n())
 
-write.csv(waze_bl2020, file=file.path(output.loc,"/waze_baseline_2020.csv"), row.names=FALSE)
+write.csv(waze_bl2020, file = file.path(output.loc, "waze_baseline_2020.csv"), row.names=FALSE)
 
 # Calculating impact for modeled results----
 
@@ -49,7 +49,7 @@ write.csv(waze_bl2020, file=file.path(output.loc,"/waze_baseline_2020.csv"), row
 # 3. For each alert type, calculate percent change from predicted to observed 
 # 4. Average the three alert types
 
-compiled_pred_s <- compiled_pred %>% filter(state == 'RI')
+# compiled_pred_s <- compiled_pred %>% filter(state == 'RI') # Smaller sample set for testing code
 
 compiled_pred_w <- compiled_pred %>% 
   pivot_wider(names_from = alert_type,
@@ -70,7 +70,15 @@ impact_index = ( rowSums(compiled_pred_w[,c('impact_crash',
 
 compiled_pred_w <- data.frame(compiled_pred_w, impact_index)
 
-#Merge historical means by month and day of week (2017-2019) to give different options for calculating response indices----
+# Sanity check: are our cases and deaths variables still correct by FIPS and date?
+compiled_pred_w %>% filter(fips == '56039' & date == '2020-03-30') %>% select(date, state, county, cases, deaths, fips)
+df %>% filter(fips == '56039' & yearday == '2020-03-30') %>% select(date, state, county, cases, deaths, fips)
+
+compiled_pred_w %>% filter(fips == '55079' & date == '2020-03-30') %>% select(date, state, county, cases, deaths, fips)
+df %>% filter(fips == '55079' & yearday == '2020-03-30') %>% select(date, state, county, cases, deaths, fips)
+# All good.
+
+# Merge historical means by month and day of week (2017-2019) to give different options for calculating response indices----
 waze_avg$day_week_ch <- as.character(waze_avg$day_week)
 compiled_pred_w$month_ch <- as.character(compiled_pred_w$month)
 waze_avg$month_int <- as.integer(waze_avg$month)
@@ -98,7 +106,7 @@ waze_bl2020_w <- waze_bl2020 %>%
 Waze2020_indices <- Waze2020_indices %>% 
   left_join(waze_bl2020_w, by = c('state' = 'state', 'county'='county', 'fips'='fips', 'day_week'='day_week_ch'))
 
-# Save-----
+# Save -----
 save(file = file.path(output.loc, 'Waze_2020_Predicted_Observed_Index.RData'),
      list = c('compiled_pred', 'compiled_pred_w', 'waze_avg', 'waze_bl2020', 'Waze2020_indices'))
 

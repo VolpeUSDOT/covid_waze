@@ -85,20 +85,34 @@ impact_index = ( rowSums(compiled_pred_w[,c('impact_crash',
 
 compiled_pred_w <- data.frame(compiled_pred_w, impact_index)
 
-# Not working yet -----
-
-#Merge historical means by month and day of week (2017-2019) and 2020 baseline values to give different options for calculating response indices.
+#Merge historical means by month and day of week (2017-2019) and 2020 baseline values to give different options for calculating response indices----
 waze_avg$day_week_ch <- as.character(waze_avg$day_week)
 compiled_pred_w$month_ch <- as.character(compiled_pred_w$month)
+waze_avg$month_int <- as.integer(waze_avg$month)
+
+#make historical data wide
+waze_avg_w <- waze_avg %>% 
+  pivot_wider(names_from = alert_type,
+              values_from = c(hist_mean, hist_median, hist_sd))
 
 Waze2020_indices <- compiled_pred_w %>% 
-                    left_join(waze_avg, by = 'fips')
+  left_join(waze_avg_w, by = c('fips'='fips', 'month' = 'month_int', 'day_week'='day_week_ch'))
 
+#Merge baseline 2020 data by day of week to give different options for calculating response indices.
 
-df <- df %>%
-  select(-county, -state) %>%
-  left_join(all_fips_table %>% select(-full), by = 'fips')
+waze_bl2020$day_week_ch <- as.character(waze_bl2020$day_week)
 
+#make baseline 2020 data wide
+waze_bl2020_w <- waze_bl2020 %>% 
+  pivot_wider(names_from = alert_type,
+              values_from = c(bl2020_mean, bl2020_median, bl2020_sd))
+
+Waze2020_indices <- Waze2020_indices %>% 
+  left_join(waze_bl2020_w, by = c('fips'='fips', 'day_week'='day_week_ch'))
+
+#Calculate differences in redicted values and historical means
+
+Waze2020_indices$pred_hist_JAM_diff <- Waze2020_indices$pred_count_JAM - Waze2020_indices$hist_mean_JAM
 
 
 

@@ -85,8 +85,20 @@ impact_index = ( rowSums(compiled_pred_w[,c('impact_crash',
 
 compiled_pred_w <- data.frame(compiled_pred_w, impact_index)
 
+# Not working yet -----
 
 #Merge historical means by month and day of week (2017-2019) and 2020 baseline values to give different options for calculating response indices.
+waze_avg$day_week_ch <- as.character(waze_avg$day_week)
+compiled_pred_w$month_ch <- as.character(compiled_pred_w$month)
+
+Waze2020_indices <- compiled_pred_w %>% 
+                    left_join(waze_avg, by = 'fips')
+
+
+df <- df %>%
+  select(-county, -state) %>%
+  left_join(all_fips_table %>% select(-full), by = 'fips')
+
 
 
 

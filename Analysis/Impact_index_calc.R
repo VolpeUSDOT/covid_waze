@@ -98,10 +98,6 @@ waze_bl2020_w <- waze_bl2020 %>%
 Waze2020_indices <- Waze2020_indices %>% 
   left_join(waze_bl2020_w, by = c('state' = 'state', 'county'='county', 'fips'='fips', 'day_week'='day_week_ch'))
 
-#Calculate differences in predicted values and historical means----
-plot(Waze2020_indices$pred_count_JAM ~ Waze2020_indices$hist_mean_JAM)
-
-
 # Save-----
 save(file = file.path(output.loc, 'Waze_2020_Predicted_Observed_Index.RData'),
      list = c('compiled_pred', 'compiled_pred_w', 'waze_avg', 'waze_bl2020', 'Waze2020_indices'))

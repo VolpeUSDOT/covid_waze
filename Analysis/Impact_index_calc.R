@@ -63,21 +63,6 @@ compiled_pred_w <- compiled_pred_w %>%
          impact_jam =   (( count_JAM - pred_count_JAM) / pred_count_JAM )
          )
 
-#Ideas to test----
-# Note: biggest impacts are when predicted values are small, so you're dividing by a small value (e.g., 0.02) 
-# When the observed value is 0, and predicted value is greater than 0 you get an impact of -1
-# Need to threshold predicted values with model tuning? E.g., predicted jams and weh of < 0.5 are assigned zero.
-# Use same threshold for crashes as for Waze analysis (values below ~0.25 are assigned zero)
-
-# Outlier filtering ----
-# Within county, omit any values for observed count_* which are > 2 s.d. above mean of count_* in that county in 2020
-# drop in Box with _filtered.csv for Michelle to use
-
-# Google style ----
-# just use median counts for previous 5 weeks from Jan 3 - Feb 6
-# Michelle will do this in Tableau
-
-
 # This is the average decrease in activity. 
 impact_index = ( rowSums(compiled_pred_w[,c('impact_crash',
                                           'impact_weh',
@@ -85,7 +70,7 @@ impact_index = ( rowSums(compiled_pred_w[,c('impact_crash',
 
 compiled_pred_w <- data.frame(compiled_pred_w, impact_index)
 
-#Merge historical means by month and day of week (2017-2019) and 2020 baseline values to give different options for calculating response indices----
+#Merge historical means by month and day of week (2017-2019) to give different options for calculating response indices----
 waze_avg$day_week_ch <- as.character(waze_avg$day_week)
 compiled_pred_w$month_ch <- as.character(compiled_pred_w$month)
 waze_avg$month_int <- as.integer(waze_avg$month)
@@ -97,10 +82,11 @@ waze_avg_w <- waze_avg %>%
 
 #join historical mean data to waze indices file 
 Waze2020_indices <- compiled_pred_w %>% 
-  left_join(waze_avg_w, by = c('fips'='fips', 'month' = 'month_int', 'day_week'='day_week_ch'))
+  left_join(waze_avg_w, 
+            by = c('state' = 'state', 'county'='county', 'fips'='fips', 'month' = 'month_int', 'day_week'='day_week_ch'))
 
-#Merge baseline 2020 data by day of week to give different options for calculating response indices.
 
+#Merge baseline 2020 data by day of week to give different options for calculating response indices----
 waze_bl2020$day_week_ch <- as.character(waze_bl2020$day_week)
 
 #make baseline 2020 data wide
@@ -110,41 +96,17 @@ waze_bl2020_w <- waze_bl2020 %>%
 
 #join baseline data to waze indices file 
 Waze2020_indices <- Waze2020_indices %>% 
-  left_join(waze_bl2020_w, by = c('fips'='fips', 'day_week'='day_week_ch'))
+  left_join(waze_bl2020_w, by = c('state' = 'state', 'county'='county', 'fips'='fips', 'day_week'='day_week_ch'))
 
-#Calculate differences in predicted values and historical means
-
-Waze2020_indices$pred_hist_JAM_diff <- Waze2020_indices$pred_count_JAM - Waze2020_indices$hist_mean_JAM
-
+#Calculate differences in predicted values and historical means----
+plot(Waze2020_indices$pred_count_JAM ~ Waze2020_indices$hist_mean_JAM)
 
 
 # Save-----
 save(file = file.path(output.loc, 'Waze_2020_Predicted_Observed_Index.RData'),
-     list = c('compiled_pred', 'compiled_pred_w'))
+     list = c('compiled_pred', 'compiled_pred_w', 'waze_avg', 'waze_bl2020', 'Waze2020_indices'))
 
 write.csv(compiled_pred_w, file = file.path(output.loc, 'Waze_2020_Predicted_Observed_Index.csv'), row.names = F)
 
+write.csv(Waze2020_indices, file = file.path(output.loc, 'Waze_2020_Indices.csv'), row.names = F)
 
-
-
-
-# old 
-# impact_df <- compiled_pred %>%
-#   group_by(date, fips, alert_type) %>%
-#   summarize(impact_alert = (pred_count - count ) / pred_count) %>%
-#   ungroup() %>%
-#   group_by(date, fips) %>%
-#   summarize(impact = mean(impact_alert, na.rm = T))
-# 
-# to_join <- compiled_pred %>% 
-#   select(date, fips, state, county, cases, deaths, 
-#          year, month, dow, day_week, weekend, week_year) %>%
-#   distinct()
-#   
-# impact_df <- impact_df %>%
-#   left_join(to_join, by = c('date', 'fips'))
-# 
-# impact_df_summary <- impact_df %>%
-#   group_by(month, state) %>%
-#   summarize(mean_impact = mean(impact, na.rm=T))
-#   

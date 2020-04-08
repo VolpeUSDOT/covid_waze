@@ -6,6 +6,7 @@
 
 # setup ----
 library(tidyverse)
+library(usmap)
 library(egg)
 library(lubridate)
 
@@ -28,6 +29,8 @@ waze_avg <- df_no2020 %>%
             hist_sd = round(sd(count, na.rm=TRUE),1),
             hist_n = n())
 
+write.csv(waze_avg, file=file.path(output.loc,"waze_avg_counts.csv"), row.names=FALSE)
+
 #2020 baseline values - county level averages by day of week for Jan 5th-Feb 8th, 2020----
 df_bl2020 <- filter(df, year == "2020" & date >= "2020-01-05" & date <= "2020-02-08" )
 waze_bl2020 <- df_bl2020 %>%
@@ -37,10 +40,7 @@ waze_bl2020 <- df_bl2020 %>%
             bl2020_sd = round(sd(count, na.rm=TRUE),1), 
             bl2020_n = n())
 
-#Merge historical means by month and day of week (2017-2019) and 2020 baseline values to give different options for calculating response indices.
-
-#write.csv(waze_avg, file=file.path(output.loc,"waze_avg_counts.csv"), row.names=FALSE)
-
+write.csv(waze_bl2020, file=file.path(output.loc,"/waze_baseline_2020.csv"), row.names=FALSE)
 
 # Calculating impact for modeled results----
 
@@ -56,12 +56,18 @@ compiled_pred_w <- compiled_pred %>%
               values_from = c(count, pred_count))
 
 # Impact: percent decrease in activity compared to expected (pred_count)
-
+# Updated calculation to (observed-predicted)/(predicted) to get sign right (negative is lower than predicted value)
 compiled_pred_w <- compiled_pred_w %>%
-  mutate(impact_crash = (( pred_count_ACCIDENT - count_ACCIDENT) / pred_count_ACCIDENT ),
-         impact_weh =   (( pred_count_WEATHERHAZARD - count_WEATHERHAZARD) / pred_count_WEATHERHAZARD ),
-         impact_jam =   (( pred_count_JAM - count_JAM) / pred_count_JAM )
+  mutate(impact_crash = (( count_ACCIDENT - pred_count_ACCIDENT) / pred_count_ACCIDENT ),
+         impact_weh =   (( count_WEATHERHAZARD - pred_count_WEATHERHAZARD) / pred_count_WEATHERHAZARD ),
+         impact_jam =   (( count_JAM - pred_count_JAM) / pred_count_JAM )
          )
+
+#Ideas to test----
+# Note: biggest impacts are when predicted values are small, so you're dividing by a small value (e.g., 0.02) 
+# When the observed value is 0, and predicted value is greater than 0 you get an impact of -1
+# Need to threshold predicted values with model tuning? E.g., predicted jams and weh of < 0.5 are assigned zero.
+# Use same threshold for crashes as for Waze analysis (values below ~0.25 are assigned zero)
 
 # Outlier filtering ----
 # Within county, omit any values for observed count_* which are > 2 s.d. above mean of count_* in that county in 2020
@@ -73,15 +79,14 @@ compiled_pred_w <- compiled_pred_w %>%
 
 
 # This is the average decrease in activity. 
-# Multiply by -1 to make the sign logical:
-# A negative value indicates a decrease in activty by that proportion
-# -1 = 100% decrease in activity compared to expected
-#  1 = 100% increase in activity compared to expected
-impact_index = -1 * ( rowSums(compiled_pred_w[,c('impact_crash',
+impact_index = ( rowSums(compiled_pred_w[,c('impact_crash',
                                           'impact_weh',
                                           'impact_jam')]) / 3 )
 
 compiled_pred_w <- data.frame(compiled_pred_w, impact_index)
+
+
+#Merge historical means by month and day of week (2017-2019) and 2020 baseline values to give different options for calculating response indices.
 
 
 

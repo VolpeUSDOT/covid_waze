@@ -24,7 +24,7 @@ git_dir <- paste(git_dir[1:(length(git_dir)-1)], collapse = '/')
 source('utility/get_packages.R')
 
 # Waze
-load('Data/Compiled_county_counts.RData') # Get this from SDC export_requests
+load('Data/Compiled_county_counts_2020-04-09.RData') # Get this from SDC export_requests
 
 waze <- compiled_counts # rename for ease 
 

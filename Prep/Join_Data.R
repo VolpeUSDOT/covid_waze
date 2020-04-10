@@ -1,3 +1,5 @@
+# !!! This has been moved to SDC GitLab. Don't use this version !!!
+
 # Join data sources and generate expected counts of alerts for 2020.
 
 # Data 

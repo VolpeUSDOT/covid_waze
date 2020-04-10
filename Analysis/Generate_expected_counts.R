@@ -15,12 +15,11 @@ library(doParallel)
 
 source('Analysis/RandomForest_WazeGrid_Fx.R')
 
-load('Data/Waze_Covid_joined.RData')
+load('Data/Waze_Covid_joined_2020-04-10.RData')
 output.loc = 'Output'
 
 #Use day of week (not day of year) to capture weekend/weekday patterns 
-df$date_weekday <- as.Date(df$date)
-df$day_week <- wday(ymd(df$date_weekday),label = TRUE, abbr = FALSE)
+df$day_week <- wday(ymd(df$date),label = TRUE, abbr = FALSE)
 df$weekend <- df$day_week == "Saturday" | df$day_week == "Sunday" 
 
 #Save week of year

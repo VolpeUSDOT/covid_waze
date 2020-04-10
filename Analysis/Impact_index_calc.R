@@ -42,6 +42,32 @@ waze_bl2020 <- df_bl2020 %>%
 
 write.csv(waze_bl2020, file = file.path(output.loc, "waze_baseline_2020.csv"), row.names=FALSE)
 
+# 2020 county and state baseline totals for Jan 5th-Feb 8th, 2020 ----
+waze_county_bl2020 <- waze_bl2020 %>%
+  group_by(alert_type, fips, state, county) %>%
+  summarise(bl2020_cty_sum = round(sum(bl2020_mean, na.rm=TRUE),1), 
+            bl2020_cty_n = n())
+write.csv(waze_county_bl2020, file = file.path(output.loc, "waze_county_bl2020.csv"), row.names=FALSE)
+
+waze_state_bl2020 <- waze_bl2020 %>%
+  group_by(alert_type, state) %>%
+  summarise(bl2020_st_sum = round(sum(bl2020_mean, na.rm=TRUE),1), 
+            bl2020_st_n = n())
+write.csv(waze_state_bl2020, file = file.path(output.loc, "waze_state_bl2020.csv"), row.names=FALSE)
+
+wazeall_county_bl2020 <- waze_bl2020 %>%
+  group_by(fips, state, county) %>%
+  summarise(bl2020_cty_sum_all = round(sum(bl2020_mean, na.rm=TRUE),1), 
+            bl2020_cty_n_all = n())
+write.csv(wazeall_county_bl2020, file = file.path(output.loc, "wazeall_county_bl2020.csv"), row.names=FALSE)
+
+wazeall_state_bl2020 <- waze_bl2020 %>%
+  group_by(state) %>%
+  summarise(bl2020_st_sum_all = round(sum(bl2020_mean, na.rm=TRUE),1), 
+            bl2020_st_n_all = n())
+write.csv(wazeall_state_bl2020, file = file.path(output.loc, "wazeall_state_bl2020.csv"), row.names=FALSE)
+
+
 # Calculating impact for modeled results----
 
 # 1. Collapse to a single day per county

@@ -6,7 +6,7 @@ library(egg)
 
 output.loc = 'Output'
 
-load('Data/Waze_Covid_joined.RData')
+# load('Data/Waze_Covid_joined.RData')
 load(file.path(output.loc, 'Waze_2020_Predicted_Observed_Index.RData'))
 
 # Plotting ----

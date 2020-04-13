@@ -15,7 +15,7 @@ output.loc = 'Output'
 WITH_RF = FALSE # To skip the random forest output stuff
 
 #load('Data/Waze_Covid_joined.RData')
-load('Data/Waze_Covid_joined_2020-04-10.RData')
+load('Data/Waze_Covid_joined_2020-04-13.RData')
 # load(file.path(output.loc, 'Waze_2020_Predicted_Observed_Index.RData'))
 
 #  Generate expected values by county/day for 2020 based on 2018 and 2019 data ----
@@ -127,8 +127,17 @@ if(WITH_RF){
 } else {
 # get counts by day and county from df
   df_w <- df %>% 
+    filter(year == "2020") %>%
     pivot_wider(names_from = alert_type,
                 values_from = c(count))
+  
+  df_w <- df_w %>% 
+    rename(count_ACCIDENT = ACCIDENT,
+           count_WEATHERHAZARD = WEATHERHAZARD,
+           count_JAM = JAM)
+  # Clean up to free up RAM
+  rm(df, df_bl2020, df_no2020,
+     wazeall_county_bl2020, wazeall_state_bl2020); gc()
   
   Waze2020_indices = df_w %>% 
     left_join(waze_avg_w,
@@ -147,6 +156,9 @@ waze_bl2020_w <- waze_bl2020 %>%
 #join baseline data to waze indices file 
 Waze2020_indices <- Waze2020_indices %>% 
   left_join(waze_bl2020_w, by = c('state' = 'state', 'county'='county', 'fips'='fips', 'day_week'='day_week'))
+
+# Trim to today ---
+Waze2020_indices = Waze2020_indices %>% filter(date <= Sys.Date())
 
 # Save -----
 

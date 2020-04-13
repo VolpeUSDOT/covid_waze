@@ -21,8 +21,9 @@ summary(Waze2020_indices$count_JAM) #max ~8,000
 summary(Waze2020_indices$count_WEATHERHAZARD)
 
 # Remove weather/hazard outliers (~6 values from Jan 1 2020 in NY/CT counties - error with data)
-Waze2020_indices$count_WEATHERHAZARD[which(Waze2020_indices$count_WEATHERHAZARD>10000)] <- NA
-#plot(Waze2020_indices$count_WEATHERHAZARD)
+Waze2020_indices$count_WEATHERHAZARD[which(Waze2020_indices$count_WEATHERHAZARD > 10000)] <- NA
+
+# plot(Waze2020_indices$count_WEATHERHAZARD)
 summary(Waze2020_indices$count_WEATHERHAZARD) #range now to ~4800 
 
 # Look at large predicted Waze alert outliers----
@@ -144,3 +145,12 @@ ggplot(Waze2020_indices) +
   geom_histogram(aes(count_JAM)) + 
   scale_x_log10() +
   facet_wrap(~day_week)
+
+
+# check CA
+
+ca_sum <- Waze2020_indices %>% 
+  filter(state == 'CA') %>% 
+  group_by(date) %>% 
+  summarize(sum(count_ACCIDENT, na.rm=T),
+            sum(hist_mean_ACCIDENT, na.rm=T))

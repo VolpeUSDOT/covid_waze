@@ -29,7 +29,8 @@ source('utility/get_packages.R')
 load('Data/Compiled_county_counts_2020-04-09.RData') # Get this from SDC export_requests
 
 waze <- compiled_counts # rename for ease 
-
+class(waze) = 'data.frame' # clear the groupings
+rm(compiled_counts)
 # Covid
 # Refresh data source. Assumes you have cloned nytimes/covid-19-data
 system(paste0('git -C ', git_dir, '/covid-19-data/ pull'))
@@ -42,6 +43,7 @@ covid$fips <- formatC(covid$fips, width = 5, flag = "0")
 
 # Rename and aggregate to day
 waze <- waze %>%
+  filter(alert_type != 'ROAD_CLOSED') %>%
   mutate(fips = paste0(STATEFP, COUNTYFP)) %>%
   group_by(fips, yearday, alert_type) %>%
   summarize(count = sum(count))
@@ -53,7 +55,7 @@ all_fips_table <- fips_info(all_fips)
 
 # Not all counties are represented for all days. Need to expand grid to include all US counties, to accurately represent 0's
 all_dates <- unique(waze$yearday[!is.na(waze$yearday)])
-all_types <- unique(waze$alert_type[!is.na(waze$alert_type)])
+all_types <- unique(waze$alert_type[!is.na(waze$alert_type) & waze$alert_type != 'ROAD_CLOSED'])
 all_grid <- expand.grid(fips = all_fips_table$fips, yearday = all_dates, alert_type = all_types)
 
 waze_df <- left_join(all_grid, waze, by = c('fips', 'yearday', 'alert_type'))
@@ -81,6 +83,8 @@ df <- left_join(waze_df_filled %>% select(-one_not_NA, -count) %>% rename(count 
                 covid,
                 by = c('yearday' = 'date',
                        'fips' = 'fips'))
+
+rm(waze_df_filled, not_all_na_days)
 
 # Needs to have same number of rows as all_grid above
 stopifnot(identical(nrow(df), nrow(all_grid)))
@@ -123,17 +127,17 @@ df <- df %>%
 # Order by date, then fips, then alert type
 df <- df[order(df$date, df$fips, df$alert_type),]
 
-# create a version with road_closed; save both with and without
-df_rc <- df
-df <- df %>%
-  filter(alert_type != 'ROAD_CLOSED')
+# # create a version with road_closed; save both with and without
+# df_rc <- df
+# df <- df %>%
+#   filter(alert_type != 'ROAD_CLOSED')
 
 # Save ----
 
-save(df, file = 'Data/Waze_Covid_joined.RData')
-write.csv(df, file = 'Data/Waze_Covid_joined.csv', row.names = F)
+save(df, file = paste0('Data/Waze_Covid_joined_', Sys.Date(),'.RData'))
+write.csv(df, file = paste0('Data/Waze_Covid_joined_', Sys.Date(), '.csv'), row.names = F)
 
-save(df_rc, file = 'Data/Waze_Covid_joined_rc.RData')
-write.csv(df_rc, file = 'Data/Waze_Covid_joined_rc.csv', row.names = F)
+# save(df_rc, file = 'Data/Waze_Covid_joined_rc.RData')
+# write.csv(df_rc, file = 'Data/Waze_Covid_joined_rc.csv', row.names = F)
 
 # Copy to covid_waze/Data folder on Box when complete

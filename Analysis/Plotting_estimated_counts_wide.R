@@ -66,12 +66,12 @@ compiled_pred <- compiled_pred %>%
 select_counties <- c('Middlesex County', 'Cook County', 'Snohomish County')
 
 # another set
-# select_counties <- c('Wayne County', 'Jefferson Parish', 'Broward County')
+select_counties <- c('Wayne County', 'Jefferson Parish', 'Broward County')
 
 
 pred_s <- compiled_pred %>% filter(county %in% select_counties & 
-                        state %in% c('MA', 'IL', 'WA'))
-                        # state %in% c('MI', 'LA', 'FL'))
+                        #state %in% c('MA', 'IL', 'WA'))
+                        state %in% c('MI', 'LA', 'FL'))
 
 ggplot(pred_s, aes(x = date, y = count, color = alert_type)) +
   geom_point(alpha = 0.2) +

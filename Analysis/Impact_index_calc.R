@@ -15,7 +15,7 @@ output.loc = 'Output'
 WITH_RF = FALSE # To skip the random forest output stuff
 
 #load('Data/Waze_Covid_joined.RData')
-load('Data/Waze_Covid_joined_2020-04-13.RData')
+load('Data/Waze_Covid_joined_2020-04-17.RData')
 # load(file.path(output.loc, 'Waze_2020_Predicted_Observed_Index.RData'))
 
 #  Generate expected values by county/day for 2020 based on 2018 and 2019 data ----

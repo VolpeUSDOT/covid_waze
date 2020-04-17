@@ -12,10 +12,10 @@ load(file.path(output.loc, 'Waze_2020_Predicted_Observed_Index.RData'))
 
 # Apply filters to large observed Waze alert outliers----
 #plot(Waze2020_indices$count_ACCIDENT) #no clear outliers
-summary(Waze2020_indices$count_ACCIDENT) #max ~850
+summary(Waze2020_indices$count_ACCIDENT) #max ~1,114
 
 #plot(Waze2020_indices$count_JAM) #no clear outliers
-summary(Waze2020_indices$count_JAM) #max ~8,000
+summary(Waze2020_indices$count_JAM) #max ~18,360
 
 #plot(Waze2020_indices$count_WEATHERHAZARD) #some huge outliers
 summary(Waze2020_indices$count_WEATHERHAZARD)
@@ -24,7 +24,7 @@ summary(Waze2020_indices$count_WEATHERHAZARD)
 Waze2020_indices$count_WEATHERHAZARD[which(Waze2020_indices$count_WEATHERHAZARD > 10000)] <- NA
 
 # plot(Waze2020_indices$count_WEATHERHAZARD)
-summary(Waze2020_indices$count_WEATHERHAZARD) #range now to ~4800 
+summary(Waze2020_indices$count_WEATHERHAZARD) #range now to ~9255 
 
 # Look at large predicted Waze alert outliers----
 #plot(Waze2020_indices$pred_count_ACCIDENT) #some large values - look at source

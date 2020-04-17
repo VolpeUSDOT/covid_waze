@@ -1,4 +1,4 @@
-# !!! This has been moved to SDC GitLab. Don't use this version !!!
+# !!! This will be integrated with SDC; currently set up now to join fresh and historical Waze data with COVID case data !!!
 
 # Join data sources and generate expected counts of alerts for 2020.
 
@@ -19,30 +19,84 @@ library(usmap)
 
 curr_wd <- path.expand(getwd())
 git_dir <- unlist(strsplit(curr_wd, "/"))
-git_dir <- paste(git_dir[1:(length(git_dir)-1)], collapse = '/')
+git_dir <- paste(git_dir[1:(length(git_dir) - 1)], collapse = '/')
 # Assumes nytimes covid data are cloned here
 # git_dir <- git_dir[length(git_dir)-1] # Alternative, finds just the name of the directory being used for all git-tracked repos. 
 
 source('utility/get_packages.R')
 
-# Waze
-load('Data/Compiled_county_counts_2020-04-09.RData') # Get this from SDC export_requests
-
+# Historical Waze to 2020-04-01
+load('Data/Compiled_county_counts_2020-04-09.RData') 
 waze <- compiled_counts # rename for ease 
 class(waze) = 'data.frame' # clear the groupings
 rm(compiled_counts)
+
+# Fresh Waze
+load('Data/Compiled_county_counts_2020-04-01_2020-04-17.RData') 
+fresh <- compiled_counts # rename
+class(fresh) = 'data.frame' # clear the groupings
+rm(compiled_counts)
+
 # Covid
 # Refresh data source. Assumes you have cloned nytimes/covid-19-data
 system(paste0('git -C ', git_dir, '/covid-19-data/ pull'))
 
 covid <- read.csv(file.path(git_dir, 'covid-19-data', 'us-counties.csv'), stringsAsFactors = F)
 
-# Join ----
-
 covid$fips <- formatC(covid$fips, width = 5, flag = "0")
 
+# Distribute NYC cases to boroughs equally ----
+
+covid_no_nyc <- covid %>% filter(county != 'New York City')
+covid_nyc <- covid %>% filter(county == 'New York City')
+
+nyc_fips = c('36005', '36047', '36061', '36081', '36085')
+#  New York County (Manhattan, 36061), Kings County (Brooklyn, 36047), Bronx County (The Bronx, 36005), Richmond County (Staten Island, 36085), and Queens County (Queens, 36081)
+
+# Check to see if these are in the full data (should not be)
+stopifnot(sum(nyc_fips %in% covid$fips) == 0)
+
+# For each day, apportion NYC covid cases to each NYC county equally
+days = sort(unique(covid_nyc$date))
+
+nyc_equal_days <- vector()
+
+for (i in 1:length(days)) {
+  day_i = covid_nyc %>% filter(date == days[i])
+  
+  # Need a good process for assigning cases to boroughs. Can simply divide and have fractional cases; this will make it clear that these are not actually known which borough the case is assigned to. However, non-integer values may make other steps in the pipeline break, so have to check this.
+  cases = rep(day_i$cases / length(nyc_fips), length(nyc_fips))
+  deaths = rep(day_i$deaths / length(nyc_fips), length(nyc_fips))
+  
+  distributed_i = data.frame(date = day_i$date,
+             county = fips_info(nyc_fips)$county,
+             state = fips_info(nyc_fips)$abbr,
+             fips = nyc_fips, 
+             cases,
+             deaths)
+
+  nyc_equal_days = rbind(nyc_equal_days, distributed_i)
+  
+  }
+
+covid_with_nyc = rbind(covid_no_nyc, nyc_equal_days)
+
+nrow(covid); nrow(covid_with_nyc)
+
+
+# Add fresh data to historical waze ----
+
+waze_x <- rbind(waze, fresh)
+
+# Check for duplicate day / fips / alert type combos
+
+# dups <- duplicated(waze_x)
+
+
+# Join ----
+
 # Rename and aggregate to day
-waze <- waze %>%
+waze <- waze_x %>%
   filter(alert_type != 'ROAD_CLOSED') %>%
   mutate(fips = paste0(STATEFP, COUNTYFP)) %>%
   group_by(fips, yearday, alert_type) %>%

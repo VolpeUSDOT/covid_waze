@@ -24,7 +24,7 @@ summary(Waze2020_indices$count_WEATHERHAZARD)
 Waze2020_indices$count_WEATHERHAZARD[which(Waze2020_indices$count_WEATHERHAZARD > 10000)] <- NA
 
 # plot(Waze2020_indices$count_WEATHERHAZARD)
-summary(Waze2020_indices$count_WEATHERHAZARD) #range now to ~9255 
+summary(Waze2020_indices$count_WEATHERHAZARD) #range now to ~95297 
 
 # Look at large predicted Waze alert outliers----
 #plot(Waze2020_indices$pred_count_ACCIDENT) #some large values - look at source

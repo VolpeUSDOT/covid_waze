@@ -7,7 +7,10 @@ library(egg)
 output.loc = 'Output'
 
 # load('Data/Waze_Covid_joined.RData')
-load(file.path(output.loc, 'Waze_2020_Predicted_Observed_Index.RData'))
+#load(file.path(output.loc, 'Waze_2020_Predicted_Observed_Index.RData'))
+
+load(file.path(output.loc, 'Waze_2020_Index_cleaned.RData'))
+
 
 # Put into long from wide
 compiled_pred <- Waze2020_indices %>%
@@ -29,8 +32,8 @@ compiled_pred <- compiled_pred %>%
 daily_mean_all_alerts <- compiled_pred %>% 
                             filter(stringr::str_detect(alert_type, '^count_')) %>%
                             group_by(date) %>%
-                            summarize(mean_count = mean(count, na.rm=T),
-                                      median_count = median(count, na.rm=T),
+                            summarize(mean_count = mean(count, na.rm = T),
+                                      median_count = median(count, na.rm = T),
                                       n_zero = sum(count == 0 | is.na(count)))
 
 plot(daily_mean_all_alerts$mean_count)
@@ -41,6 +44,7 @@ tail(daily_mean_all_alerts$mean_count)
 ggplot(daily_mean_all_alerts, aes(x = date, y = mean_count)) +
          geom_point()
 
+# USE THIS to evaluate completenss
 ggplot(daily_mean_all_alerts, aes(x = date, y = n_zero)) +
   geom_point()
 
@@ -66,12 +70,14 @@ compiled_pred <- compiled_pred %>%
 select_counties <- c('Middlesex County', 'Cook County', 'Snohomish County')
 
 # another set
-select_counties <- c('Wayne County', 'Jefferson Parish', 'Broward County')
+# select_counties <- c('Wayne County', 'Jefferson Parish', 'Broward County')
 
 
 pred_s <- compiled_pred %>% filter(county %in% select_counties & 
-                        #state %in% c('MA', 'IL', 'WA'))
-                        state %in% c('MI', 'LA', 'FL'))
+                        state %in% c('MA', 'IL', 'WA'))
+                        # state %in% c('MI', 'LA', 'FL'))
+
+pred_s$date <- as.Date(pred_s$date)
 
 ggplot(pred_s, aes(x = date, y = count, color = alert_type)) +
   geom_point(alpha = 0.2) +
@@ -115,4 +121,15 @@ ggsave(gpall,
        file = file.path(output.loc, 'Example_obs_est_month_time_series_plots_1.jpeg'),
        width = 10, height = 12)
 
-# 
+# NYC covid cases ----
+
+nyc_fips = c('36005', '36047', '36061', '36081', '36085')
+
+nyc_data = Waze2020_indices %>% filter(fips %in% nyc_fips)
+
+daily_sum_nyc <- nyc_data %>% 
+  group_by(date) %>%
+  summarize(sum_count = sum(count_ACCIDENT + count_WEATHERHAZARD + count_JAM, na.rm = T),
+            sum_cases = sum(cases, na.rm = T))
+
+

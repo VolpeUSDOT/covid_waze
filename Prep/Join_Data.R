@@ -83,6 +83,7 @@ covid_with_nyc = rbind(covid_no_nyc, nyc_equal_days)
 
 nrow(covid); nrow(covid_with_nyc)
 
+covid <- covid_with_nyc; gc()
 
 # Add fresh data to historical waze ----
 

@@ -61,9 +61,9 @@ plot(jam_filt$pred_count_JAM ~ jam_filt$hist_mean_JAM)
 # Use same threshold for crashes as for Waze SDI models (values below ~0.2 are assigned zero)
 
 #set thresholds
-pred_ACC_threshold <- which(Waze2020_indices$pred_count_ACCIDENT<0.2) # ~38,000 values
-pred_JAM_threshold <- which(Waze2020_indices$pred_count_JAM<0.5) #~40,500 values
-pred_WEH_threshold <- which(Waze2020_indices$pred_count_WEATHERHAZARD<0.5) #33 values
+pred_ACC_threshold <- which(Waze2020_indices$pred_count_ACCIDENT < 0.2) # ~38,000 values
+pred_JAM_threshold <- which(Waze2020_indices$pred_count_JAM < 0.5) #~40,500 values
+pred_WEH_threshold <- which(Waze2020_indices$pred_count_WEATHERHAZARD < 0.5) #33 values
 
 #update values below threshold to zero
 Waze2020_indices$pred_count_ACCIDENT[pred_ACC_threshold] <- 0
@@ -144,3 +144,15 @@ ggplot(Waze2020_indices) +
   geom_histogram(aes(count_JAM)) + 
   scale_x_log10() +
   facet_wrap(~day_week)
+
+
+# Visualize relationships between observed and predicted ----
+gp1 <- ggplot(Waze2020_indices, aes(x = count_ACCIDENT, y = pred_count_ACCIDENT)) +
+  theme_bw() +
+  geom_point(color = 'midnightblue', alpha = 0.1) 
+
+gp1
+
+gp1 +
+  scale_y_log10() +
+  scale_x_log10()

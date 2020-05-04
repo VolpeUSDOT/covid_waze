@@ -1,4 +1,21 @@
 # Grab data from auto-export bucket and upload to box
+# Depends on proper setup of SDC authentication script. Permissions are granted by SDC administrators.
+
+# The auth script is a Python script. We can call it in R using reticulate. This depends on a miniconda installation at 
+# C:/Users/{user.name}/AppData/Local/r-miniconda, or you can choose another version of Python installed. See miniconda_path().
+# See https://rstudio.github.io/reticulate/articles/python_packages.html
+
+library(reticulate)
+
+use_virtualenv("r-reticulate")
+
+# Install necessary Python libraries once:
+# py_install("boto3")
+# py_install("configparser")
+# py_install("requests", pip = TRUE)
+# py_install("getpass", pip = TRUE)
+# py_install("bs4")
+
 
 auto_export_bucket = 's3://prod-sdc-waze-autoexport-911061262852-us-east-1-bucket/alert/'
 
@@ -12,10 +29,17 @@ if (!dir.exists(local_dir)) {
 
 # path.expand(local_dir)
 
-# Refresh credentials
-system(paste0('python ',
-              file.path(path.expand(code_loc), 'utility', 'DF_samlapi_formauth_adfs3_windows.py'))
-       )
+# Refresh credentials --- still not working, debug!
+# reticulate::source_python(file =  file.path(path.expand(code_loc), 
+#             'utility',
+#             'DF_samlapi_formauth_adfs3_windows.py'),
+#             envir = 'r-reticulate')
+
+# Contintue to paste this into Anaconda Prompt
+# system(
+paste0('python ',
+               file.path(path.expand(code_loc), 'utility', 'DF_samlapi_formauth_adfs3_windows.py'))
+#        )
 
 system(paste0('aws --profile sdc s3 ls ', auto_export_bucket))
 
@@ -24,9 +48,9 @@ paste0('aws --profile sdc s3 ls ', auto_export_bucket)
 paste0('aws --profile sdc s3 ls ', auto_export_bucket, Sys.Date(), '/')
 
 # If get 'config profile could not be found', then re-run profile setup script.
-# TODO: figure out why this works in Git Bash but not in R
+# TODO: figure out why this works in Git Bash or Anaconda Prompt but not in R
 
-system(
+#system(
   paste0('aws --profile sdc s3 cp ', 
          auto_export_bucket, 
          Sys.Date(), '/',
@@ -34,4 +58,16 @@ system(
          ' ',
          path.expand(local_dir), '/',
          'Waze_2020_Index_cleaned.csv')
-)
+#)
+  
+  
+# Also get joined data for full data dashboard
+# Assumed this script is run on same day as reresh script within SDC.
+  
+  paste0('aws --profile sdc s3 cp ', 
+         auto_export_bucket, 
+         Sys.Date(), '/',
+         'Waze_Covid_joined_', Sys.Date(),'.csv',
+         ' ',
+         path.expand(local_dir), '/',
+         'Waze_Covid_joined.csv')

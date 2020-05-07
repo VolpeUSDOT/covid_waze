@@ -36,10 +36,10 @@ if (!dir.exists(local_dir)) {
 #             envir = 'r-reticulate')
 
 # Contintue to paste this into Anaconda Prompt
-# system(
+writeClipboard(
 paste0('python ',
                file.path(path.expand(code_loc), 'utility', 'DF_samlapi_formauth_adfs3_windows.py'))
-#        )
+        )
 
 system(paste0('aws --profile sdc s3 ls ', auto_export_bucket))
 
@@ -50,7 +50,7 @@ paste0('aws --profile sdc s3 ls ', auto_export_bucket, Sys.Date(), '/')
 # If get 'config profile could not be found', then re-run profile setup script.
 # TODO: figure out why this works in Git Bash or Anaconda Prompt but not in R
 
-#system(
+writeClipboard(
   paste0('aws --profile sdc s3 cp ', 
          auto_export_bucket, 
          Sys.Date(), '/',
@@ -58,12 +58,12 @@ paste0('aws --profile sdc s3 ls ', auto_export_bucket, Sys.Date(), '/')
          ' ',
          path.expand(local_dir), '/',
          'Waze_2020_Index_cleaned.csv')
-#)
+)
   
   
 # Also get joined data for full data dashboard
 # Assumed this script is run on same day as reresh script within SDC.
-  
+writeClipboard(  
   paste0('aws --profile sdc s3 cp ', 
          auto_export_bucket, 
          Sys.Date(), '/',
@@ -71,3 +71,4 @@ paste0('aws --profile sdc s3 ls ', auto_export_bucket, Sys.Date(), '/')
          ' ',
          path.expand(local_dir), '/',
          'Waze_Covid_joined.csv')
+  )

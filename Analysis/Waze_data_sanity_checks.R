@@ -96,10 +96,15 @@ co_NA_count = d %>%
   )
 
 # Test
-d %>% filter(fips == '01005') %>% select(fips, date, bl2020_mean_ACCIDENT, bl2020_mean_ACCIDENT_nf)
+d %>% filter(fips == '01005') %>% select(fips, date, 
+                                         bl2020_mean_ACCIDENT, bl2020_mean_ACCIDENT_nf,
+                                         bl2020_mean_JAM, bl2020_mean_JAM_nf)
+
+co_NA_count %>% filter(fips == '01005')
 
 ggplot(co_NA_count, aes(x = NA_crash_threshold, y = NA_crash_nonthreshold)) +
-  geom_point() +
+  geom_count() +
+  scale_size_area() +
   geom_abline(slope = 1, intercept = 0, lty = 2)
 
 # plot ----

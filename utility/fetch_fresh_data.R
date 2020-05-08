@@ -15,7 +15,8 @@ use_virtualenv("r-reticulate")
 # py_install("requests", pip = TRUE)
 # py_install("getpass", pip = TRUE)
 # py_install("bs4")
-
+# py_install("xml")
+# py_install("urllib")
 
 auto_export_bucket = 's3://prod-sdc-waze-autoexport-911061262852-us-east-1-bucket/alert/'
 
@@ -29,10 +30,11 @@ if (!dir.exists(local_dir)) {
 
 # path.expand(local_dir)
 
-# Refresh credentials --- still not working, debug!
-# reticulate::source_python(file =  file.path(path.expand(code_loc), 
+# # Refresh credentials --- still not working, debug!
+# reticulate::source_python(file =  file.path(path.expand(code_loc),
 #             'utility',
-#             'DF_samlapi_formauth_adfs3_windows.py'),
+#            'DF_samlapi_formauth_adfs3_windows.py'),
+# #             'samlapi_formauth_adfs3_linux.py'),
 #             envir = 'r-reticulate')
 
 # Contintue to paste this into Anaconda Prompt

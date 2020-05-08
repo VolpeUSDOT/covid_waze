@@ -4,7 +4,7 @@ import sys
 import boto3
 # import boto.s3
 import requests
-import getpass
+# import getpass
 import configparser
 import base64
 import logging
@@ -44,8 +44,9 @@ idpentryurl = 'https://secure.securedatacommons.com/adfs/ls/IdpInitiatedSignOn.a
 # Get the federated credentials from the user
 # print("Username:"),
 # username = raw_input()
+# password = getpass.getpass()
 username = input("Username: ")
-password = getpass.getpass()
+password = input("Password: ") 
 print('')
 
 # Initiate session handler

@@ -2,8 +2,9 @@
 *.RData
 *.xlsx
 *.Rproj.user/
-.Rproj.user
 *.jpeg
 *.zip
 .Rhistory
-.Rhistory
+*.iml
+*.idea/
+TODO.md

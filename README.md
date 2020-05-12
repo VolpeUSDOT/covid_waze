@@ -11,7 +11,7 @@ Some simplifying assumptions:
 
 - covid-19 cases: NYT counts of cases by county and day from their [GitHub repository](https://github.com/nytimes/covid-19-data)
 
-- State declarations: Manually compiled set of emergency declarations. For the restrictions tracking, we use the New York Times page “See Which States are Reopening and Which are Still Shut Down”. This page is updated daily and is broken down with a list of states that are easing restrictions with links attached to other relevant articles. For instance, this article is linked under Alabama’s reopening update. Each day we check the articles that are linked for updated information and also check the information in the data sheet to ensure it is correct. If there is a new state opening or new information on a state that has been opened, that information is put into the appropriate column. 
+- State declarations: Manually compiled set of emergency declarations. For the restrictions tracking, we use the New York Times page “See Which States are Reopening and Which are Still Shut Down” (https://www.nytimes.com/interactive/2020/us/states-reopen-map-coronavirus.html). This page is updated daily and is broken down with a list of states that are easing restrictions with links attached to other relevant articles. For instance, this article is linked under Alabama’s reopening update (https://www.al.com/news/2020/04/gov-kay-ivey-press-conference-on-plans-for-reopening-alabama-watch-live.html). Each day we check the articles that are linked for updated information and also check the information in the data sheet to ensure it is correct. If there is a new state opening or new information on a state that has been opened, that information is put into the appropriate column. 
 
 ## Data end points
 

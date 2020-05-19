@@ -14,7 +14,7 @@ import logging
 import xml.etree.ElementTree as ET
 import re
 from bs4 import BeautifulSoup
-from os.path import expanduser
+import os
 from urllib.parse import urlparse, urlunparse
 
 
@@ -31,7 +31,15 @@ outputformat = 'json'
 
 # awsconfigfile: The file where this script will store the temp
 # credentials under the saml profile
-awsconfigfile = '\.aws\config'
+aws_cred_dir = '\.aws'
+awsconfigfile = os.path.join(aws_cred_dir, 'config')
+
+if not os.path.exists(aws_cred_dir):
+    os.makedirs(aws_cred_dir)
+
+if not os.path.exists(awsconfigfile):
+    # make blank config file as well
+    open(awsconfigfile, 'a').close()
 
 # SSL certificate verification: Whether or not strict certificate
 # verification is done, False should only be used for dev/test
@@ -186,12 +194,22 @@ conn = boto3.client('sts')
 token = conn.assume_role_with_saml(RoleArn=role_arn, PrincipalArn=principal_arn, SAMLAssertion=assertion)
 
 # Write the AWS STS token into the AWS credential file
-home = expanduser("~")
-filename = home + awsconfigfile
+home = os.path.expanduser("~")
 
+# Put a blank config file in place if none exists
+home_aws_cred_dir = os.path.join(home, '.aws')
+home_awsconfigfile = os.path.join(home_aws_cred_dir, 'config')
+
+if not os.path.exists(home_aws_cred_dir):
+    os.makedirs(home_aws_cred_dir)
+
+if not os.path.exists(home_awsconfigfile):
+    # make blank config file as well
+    open(home_awsconfigfile, 'a').close()
+    
 # Read in the existing config file
 config = configparser.RawConfigParser()
-config.read(filename)
+config.read(home_awsconfigfile)
 
 # Put the credentials into a saml specific section instead of clobbering
 # the default credentials
@@ -205,12 +223,12 @@ config.set('profile sdc', 'aws_secret_access_key', token['Credentials']['SecretA
 config.set('profile sdc', 'aws_session_token', token['Credentials']['SessionToken'])
 
 # Write the updated config file
-with open(filename, 'w+') as configfile:
+with open(home_awsconfigfile, 'w+') as configfile:
     config.write(configfile)
 
 # Give the user some basic info as to what has just happened
 print('\n\n----------------------------------------------------------------')
-print('Your new access key pair has been stored in the AWS configuration file {0} under the saml profile.'.format(filename))
+print('Your new access key pair has been stored in the AWS configuration file {0} under the saml profile.'.format(home_awsconfigfile))
 print('Note that it will expire at {0}.'.format(token['Credentials']['Expiration']))
 print('After this time, you may safely rerun this script to refresh your access key pair.')
 print('To use this credential, call the AWS CLI with the --profile option (e.g. aws --profile sdc ec2 describe-instances).')
@@ -219,16 +237,4 @@ print('----------------------------------------------------------------\n\n')
 s3conn = boto3.client('s3', aws_access_key_id=token['Credentials']['AccessKeyId'],
     aws_secret_access_key=token['Credentials']['SecretAccessKey'],
     aws_session_token=token['Credentials']['SessionToken'])
-
-
-
-# In[ ]:
-
-
-
-
-
-
-
-
 

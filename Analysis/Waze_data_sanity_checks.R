@@ -126,3 +126,7 @@ ggplot(date_count_full, aes(x = date, y = count_NA)) +
   geom_line() +
   ggtitle('Total counties x alert types with NA Waze data by date \n Full data set')
 
+
+# Covid case data check -----
+
+ggplot(d %>% filter(state == 'MA'), aes(x = date, y = cases)) + geom_line() + facet_wrap(~fips)

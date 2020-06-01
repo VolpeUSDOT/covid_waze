@@ -127,6 +127,19 @@ ggplot(date_count_full, aes(x = date, y = count_NA)) +
   ggtitle('Total counties x alert types with NA Waze data by date \n Full data set')
 
 
+# DC and DE sanity checks after fixed overlap logic ----
+
+ggplot(d_full %>% filter(state == 'DC' | state == 'DE'), 
+       aes(x = date, y = count)) +
+  geom_line() +
+  facet_wrap(~fips + alert_type, scales = 'free_y') +
+  ggtitle('DC and DE by alert types \n Full data set')
+
+
 # Covid case data check -----
 
 ggplot(d %>% filter(state == 'MA'), aes(x = date, y = cases)) + geom_line() + facet_wrap(~fips)
+
+
+ggplot(d %>% filter(state == 'MI'), aes(x = date, y = cases)) + geom_line() + facet_wrap(~fips)
+ggplot(d %>% filter(fips == '26163'), aes(x = date, y = cases)) + geom_line() + facet_wrap(~fips)

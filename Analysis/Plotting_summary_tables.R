@@ -4,9 +4,14 @@
 library(tidyverse)
 library(egg)
 
-load('Data/Waze_Covid_joined.RData')
+input.loc = 'Data'
 output.loc = 'Output'
 
+latest_refresh_day = max(dir('Output')[grep('2020-', dir('Output'))]) # e.g. '2020-05-06'
+
+df <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_Covid_joined.csv'),
+                   col_types = cols(cases = col_double(),
+                                    deaths = col_double()))   
 # Histograms by alert type
 ggplot(df) + 
   geom_histogram(aes(count)) + 
@@ -14,11 +19,8 @@ ggplot(df) +
   facet_wrap(~alert_type)
 
 # time series for some selected counties
-# !!! NOTE: Waze data lag behind covid case data. There are a handful of alerts which are for recent dates, but the bulk of the data is not present for the most recent days. 
-# Therefore, for these time series plots, I am currently truncating the dataframe by 7 days.
-df_all <- df
 df <- df %>%
-  filter(date <= Sys.Date()-7)
+  filter(date <= Sys.Date()-3)
 
 select_counties <- c('Middlesex County', 'Cook County', 'Snohomish County')
 

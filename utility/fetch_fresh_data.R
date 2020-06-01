@@ -54,6 +54,27 @@ paste0('aws --profile sdc s3 ls ', auto_export_bucket, Sys.Date(), '/')
 # This does require installaiton of AWS CLI for Windows. 
 # https://docs.aws.amazon.com/cli/latest/userguide/install-windows.html#install-msi-on-windows
 
+
+writeClipboard(
+  paste0('aws --profile sdc s3 cp ', 
+         auto_export_bucket, 
+         Sys.Date(), '/',
+         'Waze_2020_MSA_day.csv',
+         ' ',
+         path.expand(local_dir), '/',
+         'Waze_2020_MSA_day.csv')
+)
+
+writeClipboard(
+  paste0('aws --profile sdc s3 cp ', 
+         auto_export_bucket, 
+         Sys.Date(), '/',
+         'Waze_2020_MSA_week.csv',
+         ' ',
+         path.expand(local_dir), '/',
+         'Waze_2020_MSA_week.csv')
+)
+
 writeClipboard(
   paste0('aws --profile sdc s3 cp ', 
          auto_export_bucket, 

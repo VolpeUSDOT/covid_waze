@@ -24,6 +24,7 @@ library(tidyverse)
 library(dplyr)
 library(egg)
 
+wazedir <- '~/GitHub/covid_waze/'
 knitr::opts_knit$set(root.dir = wazedir) 
 setwd(wazedir)
 

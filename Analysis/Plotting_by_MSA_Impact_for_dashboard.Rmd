@@ -24,7 +24,7 @@ library(tidyverse)
 library(dplyr)
 library(egg)
 
-wazedir <- '~/git/covid_waze/'
+wazedir <- '../'
 knitr::opts_knit$set(root.dir = wazedir) 
 setwd(wazedir)
 
@@ -274,8 +274,13 @@ ggarrange(gp1, gp2, gp3,
           heights = rep(8, 3))
 ```
 
-## Summary tables when clicking on a state
+# Tables and figures to show when clicking on a state
 
+Idea:
+
+- Have a state map, with the Combined Statistical Area (CSA's) plotted as the union of the counties involved. Need county FIPS in addition to the CSA code. Complication: 
+
+## Table
 Show sortable tables. For a given state, 
 
 - show the most recent daily change from last year.
@@ -347,6 +352,72 @@ datatable(wg,
           caption = paste('weekly change compared to 2019 and previous week of 2020 for MSAs in the state of', ex_state,
                           'as of', most_recent_day))
 
+
+```
+
+## Alternative view of tables, for single CSA
+
+Simpler table. Only show this when clicking on one CSA in particular. Can take the space of the COVID graph in the current dashboard. Not sure what to display before clicking on one CSA...
+
+For a given CSA, display 6 total numbers:
+
+- Daily: 
+  + Crash % change from 2019
+  + Jam % change from 2019
+
+- Weekly: 
+  + Crash % change from 2019 
+  + Jam % change from 2019
+  + Crash % change from previous week in 2020 
+  + Jam % change from previous week in 2020
+
+```{r csa_table}
+ex_state = 'OH'
+ex_CSA = 'Cleveland-Akron-Canton, OH'
+most_recent_day = max(df_d$date)
+most_recent_week = max(df_w$week)
+
+
+dg <- df_d %>% 
+  ungroup() %>%
+  filter(state == ex_state,
+         CSA.Title == ex_CSA,
+         date == most_recent_day) %>%
+  select(CSA.Title, pct_ch_crash, pct_ch_jam) %>%
+  rename('Daily Waze Safety Index from 2019' = pct_ch_crash,
+         'Daily Waze Congestion Index from 2019' = pct_ch_jam)
+
+wg <- df_w %>% 
+  ungroup() %>%
+  filter(state == ex_state,
+         CSA.Title == ex_CSA,
+         week == most_recent_week) %>%
+  select(CSA.Title, pct_ch_crash, pct_ch_jam,
+         pct_ch_crash_prev, pct_ch_jam_prev) %>%
+  rename('Weekly Waze Safety Index from 2019' = pct_ch_crash,
+         'Weekly Waze Congestion Index from 2019' = pct_ch_jam,
+         'Weekly Waze Safety Index from previous week' = pct_ch_crash_prev,
+         'Weekly Waze Congestion Index from previous week' = pct_ch_jam_prev)
+
+csa_join <- t(full_join(dg, wg))
+csa_join <- as.data.frame(csa_join[-1,])
+names(csa_join) = 'Value' 
+csa_join <- data.frame(csa_join, Variable = rownames(csa_join))
+
+csa_join <- csa_join %>%
+  mutate(`Time Period` = ifelse(grepl('Daily', Variable), 'Daily', 'Weekly'),
+         `Index` = ifelse(grepl('Safety', Variable), 'Safety', 'Congestion'),
+         `Comparison` = ifelse(grepl('2019', Variable), 'From 2019', 'From Previous Week'))
+
+csa_s <- csa_join %>% filter(Index == 'Safety') %>% select(`Time Period`, Comparison, Value) %>% rename('Safety Index' = Value)
+csa_w <- csa_join %>% filter(Index == 'Congestion')%>% select(`Time Period`, Comparison, Value) %>% rename('Congestion Index' = Value)
+
+csa_join_6 <- full_join(csa_s, csa_w)
+
+datatable(csa_join_6,
+          caption = paste('Waze index values for', ex_CSA,
+                          'as of', most_recent_day),
+          options = list(dom = 't'))
 
 ```
 

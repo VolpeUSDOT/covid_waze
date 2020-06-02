@@ -33,7 +33,7 @@ output.loc = 'Output'
 ```
 
 ```{r setup2, include=FALSE, cache=TRUE}
-latest_refresh_day = max(dir('Output')[grep('2020-', dir('Output'))]) # e.g. '2020-05-06'
+latest_refresh_day = max(dir('Output')[grep('2020-', dir('Output'))]) #
 
 df_full <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_Covid_joined.csv'),
                col_types = cols(cases = col_double(),
@@ -63,7 +63,7 @@ Data files are in the Box / Output folder:
 head(df_day)
 ```
 
-- `Waze_2020_MSA_week.csv`: Weekly data by county FIPS. These are the weekly sums by alert type. Includes the corresponding value from the same county and week of year in 2019, as well as a column for the previous week in 2020 (simply lagged one week). Includes month column as well, and all the CBSA / MSA codes as for the daily file.
+- `Waze_2020_MSA_week.csv`: Weekly data by county FIPS. These are the weekly sums by alert type. Includes the corresponding value from the same county and week of year in 2019, as well as a column for the previous week in 2020 (simply lagged one week). Includes month_start column as well (month of year in which the week started), and all the CBSA / MSA codes as for the daily file.
   + Limited to only the county FIPS which have a CBSA code, 1,916 county FIPS.
   + `weeksum20_ACCIDENT` / `JAM` / `WEATHERHAZARD`: The sum by alert type for this week of the year in 2020.
   + `weeksum19_ACCIDENT` / `JAM` / `WEATHERHAZARD`: The sum by alert type for this week of the year in 2019
@@ -109,7 +109,7 @@ df_d <- df_day %>%
             dowavg19_WEATHERHAZARD = sum(dowavg19_WEATHERHAZARD, na.rm = T))
 
 df_w <- df_week %>%
-  group_by(CSA.Title, state, year, month, week) %>%
+  group_by(CSA.Title, state, year, month_start, week) %>%
   summarize(weeksum20_ACCIDENT = sum(weeksum20_ACCIDENT, na.rm = T), 
             weeksum20_JAM = sum(weeksum20_JAM, na.rm = T),
             weeksum20_WEATHERHAZARD = sum(weeksum20_WEATHERHAZARD, na.rm = T), 
@@ -274,8 +274,6 @@ ggarrange(gp1, gp2, gp3,
           heights = rep(8, 3))
 ```
 
-**TODO**: Figure out why we have missing weeks in here!! Going back to SDC code now.
-
 ## Summary tables when clicking on a state
 
 Show sortable tables. For a given state, 
@@ -317,6 +315,40 @@ datatable(wg,
 
 ```
 
+
+
+Another example, if you click on Ohio
+
+```{r summary_tables2}
+ex_state = 'OH'
+most_recent_day = max(df_d$date)
+most_recent_week = max(df_w$week)
+
+
+dg <- df_d %>% 
+  ungroup() %>%
+  filter(state == ex_state,
+         date == most_recent_day) %>%
+  select(CSA.Title, pct_ch_crash, pct_ch_weh, pct_ch_jam)
+
+wg <- df_w %>% 
+  ungroup() %>%
+  filter(state == ex_state,
+         week == most_recent_week) %>%
+  select(CSA.Title, pct_ch_crash, pct_ch_weh, pct_ch_jam,
+         pct_ch_crash_prev, pct_ch_weh_prev, pct_ch_jam_prev)
+
+datatable(dg,
+          caption = paste('Daily change compared to 2019 for MSAs in the state of', ex_state,
+                          'as of', most_recent_day))
+
+
+datatable(wg,
+          caption = paste('weekly change compared to 2019 and previous week of 2020 for MSAs in the state of', ex_state,
+                          'as of', most_recent_day))
+
+
+```
 
 output these calculated tables for Tableau to use directly 
 

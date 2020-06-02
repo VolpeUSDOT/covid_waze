@@ -9,3 +9,6 @@
 *.idea/
 TODO.md
 .Rproj.user
+*.html
+Analysis/Plotting_by_MSA_Impact_for_dashboard_cache/*
+*.png

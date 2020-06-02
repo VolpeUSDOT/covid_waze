@@ -1,0 +1,329 @@
+---
+title: "Waze/COVID: Demo Tables and Figs for MSA"
+output:
+  html_document:
+    fig_caption: true
+    df_print: paged
+    toc: yes
+    toc_depth: 3
+    toc_float:
+      collapsed: yes
+      smooth_scroll: yes
+---
+
+# Plot and summarize counts at the Micro/Metropolitan area by day and week. 
+
+
+<!-- Add the following line manually to the rendered HTML document so that IE does not block the javascript elements: -->
+<!-- saved from url=(0014)about:internet --> 
+
+
+```{r setup1, include=FALSE}
+library(DT)
+library(tidyverse)
+library(dplyr)
+library(egg)
+
+wazedir <- '~/git/covid_waze/'
+knitr::opts_knit$set(root.dir = wazedir) 
+setwd(wazedir)
+
+output.loc = 'Output'
+
+```
+
+```{r setup2, include=FALSE, cache=TRUE}
+latest_refresh_day = max(dir('Output')[grep('2020-', dir('Output'))]) # e.g. '2020-05-06'
+
+df_full <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_Covid_joined.csv'),
+               col_types = cols(cases = col_double(),
+                                deaths = col_double()))   
+
+df_week <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_MSA_week.csv'),
+                    col_types = cols(Metropolitan.Division.Code = col_character(),
+                                     Metropolitan.Division.Title = col_character()))   
+
+df_day <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_MSA_day.csv'),
+                    col_types = cols(cases = col_double(),
+                                     deaths = col_double(),
+                                     Metropolitan.Division.Code = col_character(),
+                                     Metropolitan.Division.Title = col_character()))   
+```
+
+
+Data files are in the Box / Output folder: 
+
+- `Waze_2020_MSA_day.csv`: Daily data by county FIPS and day. Includes COVID case data. This is very similar to the data frame we had been using for the dashboard (`Waze_2020_Index_cleaned.csv`), but with a few additions: 
+  + Includes Core Based Statistical Area (CBSA) code, and all other relevant Metropolitan/Micropolitan Statistical Area (MSA) Codes from the [Census delination file here](https://www.census.gov/geographies/reference-files/time-series/demo/metro-micro/delineation-files.html).
+  + Limited to only the county FIPS which have a CBSA code, 1,916 county FIPS.
+  + Includes the matching count of Waze alerts from 2019, using month and day of week to match. 
+  + Key variables are `count_ACCIDENT` / `JAM` / `WEATHERHAZARD`, and the corresponding day of week average value from 2019, `dowavg19_ACCIDENT`/ `JAM` / `WEATHERHAZARD`.
+
+```{r}
+head(df_day)
+```
+
+- `Waze_2020_MSA_week.csv`: Weekly data by county FIPS. These are the weekly sums by alert type. Includes the corresponding value from the same county and week of year in 2019, as well as a column for the previous week in 2020 (simply lagged one week). Includes month column as well, and all the CBSA / MSA codes as for the daily file.
+  + Limited to only the county FIPS which have a CBSA code, 1,916 county FIPS.
+  + `weeksum20_ACCIDENT` / `JAM` / `WEATHERHAZARD`: The sum by alert type for this week of the year in 2020.
+  + `weeksum19_ACCIDENT` / `JAM` / `WEATHERHAZARD`: The sum by alert type for this week of the year in 2019
+  + `lag1_weeksum20_ACCIDENT` / `JAM` / `WEATHERHAZARD`: The sum by alert type for the previous week of the year in 2020.
+    
+```{r}
+head(df_week)
+```
+
+- `Waze_Covid_joined.csv`: Full historical data from 2017 to present, updated using existing refresh code, includes COVID cases. Organized by county FIPS, alert_type, and date. Includes all 3,210 county FIPS. Key variable is `count`. 
+
+```{r}
+head(df_full)
+```
+
+
+# Calculate impact
+	
+Use areas where CSA.Title is not NA, and where Central.Outlying.County is Central. We may expand these to all the types, but start simple first. This results in 880 county FIPS from 1910.
+
+- For day, visualize the % change from a comparable day from 2019 (using FIPS, month, and day of week). E.g. compare `count_ACCIDENT` and `dowavg19_ACCIDENT`.  Date is the organizing x-axis variable.
+- For week, visualize the % change from the same week in 2019. E.g compare `weeksum20_JAM` to `weeksum19_JAM`. Week is the organizing x-axis variable (this is a numerical value for week of the year).
+- For week, also visualize the % change from the previous week in 2020. E.g. compare `weeksum20_ACCIDENT` to `lag1_weeksum20_ACCIDENT`.
+
+First, filter to our selected metro areas, and sum values for county FIPS with each metro area by day and week.
+
+```{r filter_group}
+df_day <- df_day %>%
+  filter(!is.na(CSA.Title) & Central.Outlying.County == 'Central',
+         date < '2020-05-29') # also limit to most recent complete date
+
+df_week <- df_week %>%
+  filter(!is.na(CSA.Title) & Central.Outlying.County == 'Central')
+
+
+df_d <- df_day %>%
+  group_by(CSA.Title, state, date, year, month, dow) %>%
+  summarize(count_ACCIDENT = sum(count_ACCIDENT, na.rm = T), 
+            count_JAM = sum(count_JAM, na.rm = T),
+            count_WEATHERHAZARD = sum(count_WEATHERHAZARD, na.rm = T), 
+            dowavg19_ACCIDENT = sum(dowavg19_ACCIDENT, na.rm = T),
+            dowavg19_JAM = sum(dowavg19_JAM, na.rm = T),
+            dowavg19_WEATHERHAZARD = sum(dowavg19_WEATHERHAZARD, na.rm = T))
+
+df_w <- df_week %>%
+  group_by(CSA.Title, state, year, month, week) %>%
+  summarize(weeksum20_ACCIDENT = sum(weeksum20_ACCIDENT, na.rm = T), 
+            weeksum20_JAM = sum(weeksum20_JAM, na.rm = T),
+            weeksum20_WEATHERHAZARD = sum(weeksum20_WEATHERHAZARD, na.rm = T), 
+            
+            weeksum19_ACCIDENT = sum(weeksum19_ACCIDENT, na.rm = T), 
+            weeksum19_JAM = sum(weeksum19_JAM, na.rm = T),
+            weeksum19_WEATHERHAZARD = sum(weeksum19_WEATHERHAZARD, na.rm = T),
+            
+            lag1_weeksum20_ACCIDENT = sum(lag1_weeksum20_ACCIDENT, na.rm = T), 
+            lag1_weeksum20_JAM = sum(lag1_weeksum20_JAM, na.rm = T),
+            lag1_weeksum20_WEATHERHAZARD = sum(lag1_weeksum20_WEATHERHAZARD, na.rm = T)
+            )
+
+```
+
+## Daily impact calcs
+
+Calculate impacts. Limit to max of 500% increase. Minimum allowed remains 100% decrease; these are days (or weeks) where 0 events of a given type were reported in that MSA.
+
+
+```{r calc_impact_day}
+# Set max impact 
+max_threshold = 500
+
+# If all 0 in 2019, set to NA
+df_d$dowavg19_ACCIDENT[df_d$dowavg19_ACCIDENT == 0] = NA
+df_d$dowavg19_JAM[df_d$dowavg19_JAM == 0] = NA
+df_d$dowavg19_WEATHERHAZARD[df_d$dowavg19_WEATHERHAZARD == 0] = NA
+
+
+# Calculate daily change from comparable day in 2019. Limit to 1000% change max
+df_d <- df_d %>%
+  mutate(pct_ch_crash = 100 * round((count_ACCIDENT - dowavg19_ACCIDENT) / dowavg19_ACCIDENT, 2),
+         pct_ch_weh = 100 * round((count_WEATHERHAZARD - dowavg19_WEATHERHAZARD) / dowavg19_WEATHERHAZARD, 2),
+         pct_ch_jam = 100 * round((count_JAM - dowavg19_JAM) / dowavg19_JAM, 2)) %>%
+  mutate(pct_ch_crash = ifelse(pct_ch_crash < max_threshold, pct_ch_crash, NA),
+         pct_ch_weh = ifelse(pct_ch_weh < max_threshold, pct_ch_weh, NA),
+         pct_ch_jam = ifelse(pct_ch_jam < max_threshold, pct_ch_jam, NA))
+
+```
+
+### Test plots by day compared to 2019
+
+For all MSAs overall, testing to make sure the impact calculations were done correctly.
+
+```{r plot_day_2019}
+
+gp1 <- ggplot(df_d, aes(x = date, y = pct_ch_crash)) + 
+  geom_point(alpha = 0.1) + 
+  geom_smooth() + 
+  geom_hline(yintercept = 0, lty = 2) + 
+  theme_bw()
+
+gp2 <- ggplot(df_d, aes(x = date, y = pct_ch_weh)) + 
+  geom_point(alpha = 0.1) + 
+  geom_smooth() + 
+  geom_hline(yintercept = 0, lty = 2) + 
+  theme_bw()
+
+gp3 <- ggplot(df_d, aes(x = date, y = pct_ch_jam)) + 
+  geom_point(alpha = 0.1) + 
+  geom_smooth() + 
+  geom_hline(yintercept = 0, lty = 2) + 
+  theme_bw()
+
+ggarrange(gp1, gp2, gp3,
+          heights = rep(8, 3)
+          )
+
+
+```
+
+## Weekly impact calcs
+
+Repeat for the weekly impact calculations, again setting 0 to NA for the comparison values, and limiting to a maximum percent change as above.
+
+```{r calc_impact_week}
+# If all 0 in 2019 or in previous week of 2020, set to NA
+df_w$weeksum19_ACCIDENT[df_w$weeksum19_ACCIDENT == 0] = NA
+df_w$weeksum19_JAM[df_w$weeksum19_JAM == 0] = NA
+df_w$weeksum19_WEATHERHAZARD[df_w$weeksum19_WEATHERHAZARD == 0] = NA
+
+df_w$lag1_weeksum20_ACCIDENT[df_w$lag1_weeksum20_ACCIDENT == 0] = NA
+df_w$lag1_weeksum20_JAM[df_w$lag1_weeksum20_JAM == 0] = NA
+df_w$lag1_weeksum20_WEATHERHAZARD[df_w$lag1_weeksum20_WEATHERHAZARD == 0] = NA
+
+
+# Calculate change from comparable week in 2019 and previous week in 2020. Limit to 1000% change max
+df_w <- df_w %>%
+  mutate(pct_ch_crash = round(100 * (weeksum20_ACCIDENT - weeksum19_ACCIDENT) / weeksum19_ACCIDENT, 2),
+         pct_ch_weh = round(100 * (weeksum20_WEATHERHAZARD - weeksum19_WEATHERHAZARD) / weeksum19_WEATHERHAZARD, 2),
+         pct_ch_jam = round(100 * (weeksum20_JAM - weeksum19_JAM) / weeksum19_JAM, 2),
+         
+         pct_ch_crash_prev = round(100 * (weeksum20_ACCIDENT - lag1_weeksum20_ACCIDENT) / lag1_weeksum20_ACCIDENT, 2),
+         pct_ch_weh_prev = round(100 * (weeksum20_WEATHERHAZARD - lag1_weeksum20_WEATHERHAZARD) / lag1_weeksum20_WEATHERHAZARD, 2),
+         pct_ch_jam_prev = round(100 * (weeksum20_JAM - lag1_weeksum20_JAM) / lag1_weeksum20_JAM, 2),
+         
+         ) %>%
+  mutate(pct_ch_crash = ifelse(pct_ch_crash < max_threshold, pct_ch_crash, NA),
+         pct_ch_weh = ifelse(pct_ch_weh < max_threshold, pct_ch_weh, NA),
+         pct_ch_jam = ifelse(pct_ch_jam < max_threshold, pct_ch_jam, NA),
+         
+         pct_ch_crash_prev = ifelse(pct_ch_crash_prev < max_threshold, pct_ch_crash_prev, NA),
+         pct_ch_weh_prev = ifelse(pct_ch_weh_prev < max_threshold, pct_ch_weh_prev, NA),
+         pct_ch_jam_prev = ifelse(pct_ch_jam_prev < max_threshold, pct_ch_jam_prev, NA))
+
+```
+
+### Test plots by week compared to 2019
+
+```{r plot_week_2019}
+gp1 <- ggplot(df_w, aes(x = week, y = pct_ch_jam)) + 
+  geom_point(alpha = 0.2) + 
+  geom_smooth() + 
+  geom_hline(yintercept = 0, lty = 2) + 
+  theme_bw()
+
+
+gp2 <- ggplot(df_w, aes(x = week, y = pct_ch_crash)) + 
+  geom_point(alpha = 0.2) + 
+  geom_smooth() + 
+  geom_hline(yintercept = 0, lty = 2) + 
+  theme_bw()
+
+
+gp3 <- ggplot(df_w, aes(x = week, y = pct_ch_weh)) + 
+  geom_point(alpha = 0.2) + 
+  geom_smooth() + 
+  geom_hline(yintercept = 0, lty = 2) + 
+  theme_bw()
+
+ggarrange(gp1, gp2, gp3,
+          heights = rep(8, 3))
+
+```
+
+
+### Test plots by week compared to previous week of 2020
+
+```{r plot_prev_week}
+gp1 <- ggplot(df_w, aes(x = week, y = pct_ch_jam_prev)) + 
+  geom_point(alpha = 0.2) + 
+  geom_smooth() + 
+  geom_hline(yintercept = 0, lty = 2) + 
+  theme_bw()
+
+
+gp2 <- ggplot(df_w, aes(x = week, y = pct_ch_crash_prev)) + 
+  geom_point(alpha = 0.2) + 
+  geom_smooth() + 
+  geom_hline(yintercept = 0, lty = 2) + 
+  theme_bw()
+
+
+gp3 <- ggplot(df_w, aes(x = week, y = pct_ch_weh_prev)) + 
+  geom_point(alpha = 0.2) + 
+  geom_smooth() + 
+  geom_hline(yintercept = 0, lty = 2) + 
+  theme_bw()
+
+ggarrange(gp1, gp2, gp3,
+          heights = rep(8, 3))
+```
+
+**TODO**: Figure out why we have missing weeks in here!! Going back to SDC code now.
+
+## Summary tables when clicking on a state
+
+Show sortable tables. For a given state, 
+
+- show the most recent daily change from last year.
+- show the most recent weekly change from last year.
+- show tthe most recent weekly change from last week.
+
+Example, if you click on a given state like Georgia, this table would pop up:
+
+```{r summary_tables}
+ex_state = 'GA'
+most_recent_day = max(df_d$date)
+most_recent_week = max(df_w$week)
+
+
+dg <- df_d %>% 
+  ungroup() %>%
+  filter(state == ex_state,
+         date == most_recent_day) %>%
+  select(CSA.Title, pct_ch_crash, pct_ch_weh, pct_ch_jam)
+
+wg <- df_w %>% 
+  ungroup() %>%
+  filter(state == ex_state,
+         week == most_recent_week) %>%
+  select(CSA.Title, pct_ch_crash, pct_ch_weh, pct_ch_jam,
+         pct_ch_crash_prev, pct_ch_weh_prev, pct_ch_jam_prev)
+
+datatable(dg,
+          caption = paste('Daily change compared to 2019 for MSAs in the state of', ex_state,
+                          'as of', most_recent_day))
+
+
+datatable(wg,
+          caption = paste('weekly change compared to 2019 and previous week of 2020 for MSAs in the state of', ex_state,
+                          'as of', most_recent_day))
+
+
+```
+
+
+output these calculated tables for Tableau to use directly 
+
+```{r output}
+
+write.csv(df_w, file = file.path(output.loc, 'Waze_2020_MSA_week_cleaned.csv'), row.names = F)
+write.csv(df_d, file = file.path(output.loc, 'Waze_2020_MSA_day_cleaned.csv'), row.names = F)
+
+
+```

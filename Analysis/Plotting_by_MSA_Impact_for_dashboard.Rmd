@@ -80,6 +80,32 @@ head(df_full)
 ```
 
 
+```{r filter_low_baseline}
+# Set low counts in any of the baseline counts (dowavg19, weeksum19, and lag1_weeksum20) to NA if they are below 10. That should fix some of the super high percent change values, which happen when the denominator is small.
+min_count = 10
+
+df_day <- df_day %>%
+    mutate(dowavg19_ACCIDENT = ifelse(dowavg19_ACCIDENT >= min_count, dowavg19_ACCIDENT, NA),
+           dowavg19_WEATHERHAZARD = ifelse(dowavg19_WEATHERHAZARD >= min_count, dowavg19_WEATHERHAZARD, NA),
+           dowavg19_JAM = ifelse(dowavg19_JAM >= min_count, dowavg19_JAM, NA)
+           )
+
+
+df_week <- df_week %>%
+    mutate(weeksum19_ACCIDENT = ifelse(weeksum19_ACCIDENT >= min_count, weeksum19_ACCIDENT, NA),
+           weeksum19_WEATHERHAZARD = ifelse(weeksum19_WEATHERHAZARD >= min_count, weeksum19_WEATHERHAZARD, NA),
+           weeksum19_JAM = ifelse(weeksum19_JAM >= min_count, weeksum19_JAM, NA),
+           
+           lag1_weeksum20_ACCIDENT = ifelse(lag1_weeksum20_ACCIDENT >= min_count, lag1_weeksum20_ACCIDENT, NA),
+           lag1_weeksum20_WEATHERHAZARD = ifelse(lag1_weeksum20_WEATHERHAZARD >= min_count, lag1_weeksum20_WEATHERHAZARD, NA),
+           lag1_weeksum20_JAM = ifelse(lag1_weeksum20_JAM >= min_count, lag1_weeksum20_JAM, NA)
+           )
+
+write.csv(df_day, file = file.path(output.loc, latest_refresh_day, 'Waze_2020_MSA_day.csv'), row.names = F)
+write.csv(df_week, file = file.path(output.loc, latest_refresh_day, 'Waze_2020_MSA_week.csv'), row.names = F)
+
+```
+
 # Calculate impact
 	
 Use areas where CSA.Title is not NA, and where Central.Outlying.County is Central. We may expand these to all the types, but start simple first. This results in 880 county FIPS from 1910.

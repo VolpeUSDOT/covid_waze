@@ -95,6 +95,8 @@ if(!dir.exists(file.path(output.loc, latest_refresh_day, 'patch'))){
   dir.create(file.path(output.loc, latest_refresh_day, 'patch'))
 }
 
+stopifnot(dim(nd_patched) == dim(nd))
+
 write.csv(nd_patched, file = file.path(output.loc, latest_refresh_day, 'patch', 'Waze_2020_National_day.csv'), row.names = F)    
 
 # For MSA_day ----
@@ -148,6 +150,8 @@ plot(md_patched$dowavg19_ACCIDENT[!md_patched$state %in% c('CT','NY', 'MA')],
 plot(md_patched$dowavg19_ACCIDENT[md_patched$state %in% c('CT','NY', 'MA')], 
      md$dowavg19_ACCIDENT[md$state %in% c('CT','NY', 'MA')])
 
+stopifnot(dim(md_patched) == dim(md))
+
 write.csv(md_patched, file = file.path(output.loc, latest_refresh_day, 'patch', 'Waze_2020_MSA_day.csv'), row.names = F)    
 
 # For MSA_week ----
@@ -155,45 +159,47 @@ write.csv(md_patched, file = file.path(output.loc, latest_refresh_day, 'patch', 
 # Make week sums
 d18cw <- d_cbsa %>%
   filter(year == 2018 & month %in% c('05', '06') & state %in% c('CT', 'NY', 'MA')) %>%
-  group_by(fips, alert_type, state, month, week,
+  group_by(fips, alert_type, state, week,
   ) %>%
-  summarize(dowavg18 = mean(count, na.rm = T))
+  summarize(weeksum18 = sum(count, na.rm = T))
 
-d18cw <- d18c %>%
-  mutate(dowavg18 = ifelse(dowavg18 < 10, NA, dowavg18)) %>%
+d18cww <- d18cw %>%
+  mutate(weeksum18 = ifelse(weeksum18 < 10, NA, weeksum18)) %>%
   pivot_wider(names_from = alert_type,
-              values_from = dowavg18,
-              names_prefix = 'dowavg18_')
+              values_from = weeksum18,
+              names_prefix = 'weeksum18_')
 
-md_to_patch <- md %>% filter(!state %in% c('CT','NY', 'MA'))
-md_patch <- md %>% filter(state %in% c('CT','NY', 'MA'))
+mw_to_patch <- mw %>% filter(!state %in% c('CT','NY', 'MA'))
+mw_patch <- mw %>% filter(state %in% c('CT','NY', 'MA'))
 
-md_patch <- md_patch %>%
-  left_join(d18cw)
+mw_patch <- mw_patch %>%
+  left_join(d18cww)
 
-md_patch <- md_patch %>%
-  mutate(dowavg19_ACCIDENT = ifelse(is.na(dowavg18_ACCIDENT), dowavg19_ACCIDENT, dowavg18_ACCIDENT),
-         dowavg19_JAM = ifelse(is.na(dowavg18_JAM), dowavg19_JAM, dowavg18_JAM),
-         dowavg19_WEATHERHAZARD = ifelse(is.na(dowavg18_WEATHERHAZARD), dowavg19_WEATHERHAZARD, dowavg18_WEATHERHAZARD)) %>%
-  dplyr::select(-dowavg18_ACCIDENT,
-                -dowavg18_JAM,
-                -dowavg18_WEATHERHAZARD)
+mw_patch <- mw_patch %>%
+  mutate(weeksum19_ACCIDENT = ifelse(is.na(weeksum18_ACCIDENT), weeksum19_ACCIDENT, weeksum18_ACCIDENT),
+         weeksum19_JAM = ifelse(is.na(weeksum18_JAM), weeksum19_JAM, weeksum18_JAM),
+         weeksum19_WEATHERHAZARD = ifelse(is.na(weeksum18_WEATHERHAZARD), weeksum19_WEATHERHAZARD, weeksum18_WEATHERHAZARD)) %>%
+  dplyr::select(-weeksum18_ACCIDENT,
+                -weeksum18_JAM,
+                -weeksum18_WEATHERHAZARD)
 
 # append to the to_patch df
 
-md_patched <- rbind(md_to_patch, md_patch)
+mw_patched <- rbind(mw_to_patch, mw_patch)
 
-md_patched <- md_patched[order(md_patched$state, md_patched$fips, md_patched$date),]
-md <- md[order(md$state, md$fips, md$date),]
+mw_patched <- mw_patched[order(mw_patched$state, mw_patched$fips, mw_patched$week),]
+mw <- mw[order(mw$state, mw$fips, mw$week),]
 
 # Should be 1:1, yes
-plot(md_patched$dowavg19_ACCIDENT[!md_patched$state %in% c('CT','NY', 'MA')], 
-     md$dowavg19_ACCIDENT[!md$state %in% c('CT','NY', 'MA')])
+plot(mw_patched$weeksum19_ACCIDENT[!mw_patched$state %in% c('CT','NY', 'MA')], 
+     mw$weeksum19_ACCIDENT[!mw$state %in% c('CT','NY', 'MA')])
 
 # Fixed for may/june
-plot(md_patched$dowavg19_ACCIDENT[md_patched$state %in% c('CT','NY', 'MA')], 
-     md$dowavg19_ACCIDENT[md$state %in% c('CT','NY', 'MA')])
+plot(mw_patched$weeksum19_ACCIDENT[mw_patched$state %in% c('CT','NY', 'MA')], 
+     mw$weeksum19_ACCIDENT[mw$state %in% c('CT','NY', 'MA')])
 
-write.csv(md_patched, file = file.path(output.loc, latest_refresh_day, 'patch', 'Waze_2020_MSA_day.csv'), row.names = F)    
+stopifnot(dim(mw_patched) == dim(mw))
+
+write.csv(mw_patched, file = file.path(output.loc, latest_refresh_day, 'patch', 'Waze_2020_MSA_week.csv'), row.names = F)    
 
 

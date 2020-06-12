@@ -24,6 +24,9 @@ d <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_Index_cleaned
               col_types = cols(cases = col_double(),
                                deaths = col_double()))       
 
+nw <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_National_week.csv'))       
+
+
 # Summarize for tests ----
 
 date_count <- d %>%
@@ -55,6 +58,12 @@ d %>% dplyr::select(fips, date, count_ACCIDENT, change_crash, count_JAM, change_
 
 co_date_count_full <- d_full %>%
   group_by(fips, date, state, county) %>%
+  summarize(total_Waze_count = sum(count, na.rm = T),
+            count_NA = sum(is.na(count)))
+
+
+co_date_count_full <- d_full %>%
+  group_by(date) %>%
   summarize(total_Waze_count = sum(count, na.rm = T),
             count_NA = sum(is.na(count)))
 
@@ -143,3 +152,28 @@ ggplot(d %>% filter(state == 'MA'), aes(x = date, y = cases)) + geom_line() + fa
 
 ggplot(d %>% filter(state == 'MI'), aes(x = date, y = cases)) + geom_line() + facet_wrap(~fips)
 ggplot(d %>% filter(fips == '26163'), aes(x = date, y = cases)) + geom_line() + facet_wrap(~fips)
+
+# National-level number check ----
+
+# Get national-level baseline total. Same for every week, but adding week variable for merging
+d <- d %>%
+  ungroup() %>%
+  mutate(week = lubridate::week(lubridate::ymd(date))) 
+
+nat_bl <- d %>%
+  group_by(date, week) %>%
+  summarize(bl2020_crash_tot = sum(count_ACCIDENT, na.rm = T),
+            bl2020_weh_tot = sum(count_WEATHERHAZARD, na.rm = T),
+            bl2020_jam_tot = sum(count_JAM, na.rm = T),
+            bl2020_Total = sum(bl2020_crash_tot, bl2020_jam_tot, bl2020_weh_tot)
+            )
+
+# Join to national
+nw <- left_join(nw, nat_bl, by = 'week')
+
+nw_sum <- nw %>% 
+  group_by(week) %>%
+  summarize(Total_Waze_20 = sum(weeksum20_ACCIDENT, weeksum20_JAM, weeksum20_WEATHERHAZARD),
+            Total_Waze_BL = sum(bl2020_crash_tot, bl2020_weh_tot, bl2020_jam_tot))
+
+            

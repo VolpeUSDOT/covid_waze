@@ -43,9 +43,17 @@ paste0('python ',
                file.path(path.expand(code_loc), 'utility', 'DF_samlapi_formauth_adfs3_windows.py'))
         )
 
+# Trying new version
+
+writeClipboard(
+  paste0('python ',
+         file.path(path.expand(code_loc), 'utility', 'waze_token_refresh.py'))
+)
+
 system(paste0('aws --profile sdc s3 ls ', auto_export_bucket))
 
-paste0('aws --profile sdc s3 ls ', auto_export_bucket)
+writeClipboard(
+paste0('aws --profile sdc s3 ls ', auto_export_bucket))
 
 paste0('aws --profile sdc s3 ls ', auto_export_bucket, Sys.Date(), '/')
 
@@ -54,6 +62,14 @@ paste0('aws --profile sdc s3 ls ', auto_export_bucket, Sys.Date(), '/')
 # This does require installaiton of AWS CLI for Windows. 
 # https://docs.aws.amazon.com/cli/latest/userguide/install-windows.html#install-msi-on-windows
 
+writeClipboard(
+  paste0('aws --profile sdc s3 cp ', 
+         auto_export_bucket, 
+         'Compiled_county_counts_2020-06-11.zip',
+         ' ',
+         path.expand(local_dir), '/',
+         'Compiled_county_counts_2020-06-11.zip')
+)
 
 writeClipboard(
   paste0('aws --profile sdc s3 cp ', 
@@ -73,6 +89,26 @@ writeClipboard(
          ' ',
          path.expand(local_dir), '/',
          'Waze_2020_MSA_week.csv')
+)
+
+writeClipboard(
+  paste0('aws --profile sdc s3 cp ', 
+         auto_export_bucket, 
+         Sys.Date(), '/',
+         'Waze_2020_National_day.csv',
+         ' ',
+         path.expand(local_dir), '/',
+         'Waze_2020_National_day.csv')
+)
+
+writeClipboard(
+  paste0('aws --profile sdc s3 cp ', 
+         auto_export_bucket, 
+         Sys.Date(), '/',
+         'Waze_2020_National_week.csv',
+         ' ',
+         path.expand(local_dir), '/',
+         'Waze_2020_National_week.csv')
 )
 
 writeClipboard(

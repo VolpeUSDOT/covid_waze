@@ -27,6 +27,15 @@ d <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_Index_cleaned
 nw <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_National_week.csv'))       
 
 
+# Daily CSA
+
+d_csa <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_MSA_day.csv'),
+                  col_types = cols(Metropolitan.Division.Code = col_character(),
+                                   Metropolitan.Division.Title = col_character(),
+                                   cases = col_double(),
+                                   deaths = col_double()))   
+
+
 # Summarize for tests ----
 
 date_count <- d %>%
@@ -40,8 +49,6 @@ date_count_full <- d_full %>%
   summarize(total_Waze_count = sum(count, na.rm = T),
             count_NA = sum(is.na(count)))
 
-
-co_date_change
 
 d = d[order(d$fips, d$date),]
 
@@ -174,6 +181,76 @@ nw <- left_join(nw, nat_bl, by = 'week')
 nw_sum <- nw %>% 
   group_by(week) %>%
   summarize(Total_Waze_20 = sum(weeksum20_ACCIDENT, weeksum20_JAM, weeksum20_WEATHERHAZARD),
-            Total_Waze_BL = sum(bl2020_crash_tot, bl2020_weh_tot, bl2020_jam_tot))
+            Total_Waze_BL = sum(bl2020_crash_tot, bl2020_weh_tot, bl2020_jam_tot),
+            pct_ch = ( Total_Waze_20 - Total_Waze_BL ) / Total_Waze_BL)
 
-            
+ggplot(nw_sum, aes(x = week, y = Total_Waze_20)) + geom_line()
+
+# How many counties are not in a CSA but do have useful data consistently? ----
+
+central_csa_fips <- 
+
+d_notcsa <- d %>%
+  filter(!fips %in% unique(d_csa$fips))
+
+ds <- d_notcsa %>%
+  ungroup() %>%
+  group_by(fips) %>%
+  summarize(good_crash = sum(count_ACCIDENT > 10, na.rm = T),
+            good_weh = sum(count_WEATHERHAZARD > 10, na.rm = T),
+            good_jam = sum(count_JAM > 10, na.rm = T),
+            n_days = n(),
+            enough_good_weh = (good_weh / n_days) > .2,    
+            enough_good_crash = (good_crash / n_days) > .2, 
+            enough_good_jam = (good_jam / n_days) > .2,  
+            mostly_good = enough_good_crash & enough_good_weh & enough_good_jam
+            )
+
+
+table(ds$enough_good_crash) # 1
+table(ds$enough_good_jam) # 6
+table(ds$enough_good_weh) # 268
+
+ds %>%
+  group_by(enough_good_crash, enough_good_weh, enough_good_jam) %>%
+  summarize(n())
+
+# Riverside county FIPS
+d_ex <- d %>% 
+  filter(fips == '06065')
+
+ggplot(d_ex, aes(x = date, y = count_ACCIDENT)) + geom_line()
+
+# Polk county FIPS GA, a CBSA / Micro. Insufficient data.
+
+d_ex <- d %>% 
+  filter(fips == '13233')
+
+ggplot(d_ex, aes(x = date, y = count_ACCIDENT)) + geom_line()
+
+
+# Floyd county GA, a CBSA / Metro. Still insufficient in this case
+d_ex <- d %>% 
+  filter(fips == '13115')
+
+ggplot(d_ex, aes(x = date, y = count_ACCIDENT+count_WEATHERHAZARD+count_JAM)) + geom_line()
+
+
+# How many counties are in Metro Statistical Areas?
+
+dx <- d_csa[!duplicated(d_csa$fips),]
+
+table(dx$Metropolitan.Micropolitan.Statistical.Area == 'Metropolitan Statistical Area')
+
+dxx <- dx[dx$Metropolitan.Micropolitan.Statistical.Area == 'Metropolitan Statistical Area',]
+
+length(unique(dxx$CBSA.Title))
+
+# A PR county
+
+d_ex <- d %>% 
+  filter(fips == '72111')
+
+ggplot(d_ex, aes(x = date, y = count_ACCIDENT)) + geom_line()
+
+

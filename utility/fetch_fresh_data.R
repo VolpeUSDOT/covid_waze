@@ -31,17 +31,16 @@ if (!dir.exists(local_dir)) {
 # path.expand(local_dir)
 
 # # Refresh credentials --- still not working, debug!
-# reticulate::source_python(file =  file.path(path.expand(code_loc),
-#             'utility',
-#            'DF_samlapi_formauth_adfs3_windows.py'),
-# #             'samlapi_formauth_adfs3_linux.py'),
-#             envir = 'r-reticulate')
+reticulate::source_python(file =  file.path(path.expand(code_loc),
+            'utility',
+           'waze_token_refresh.py'),
+           envir = 'r-reticulate')
 
-# Contintue to paste this into Anaconda Prompt
-writeClipboard(
-paste0('python ',
-               file.path(path.expand(code_loc), 'utility', 'DF_samlapi_formauth_adfs3_windows.py'))
-        )
+# # Contintue to paste this into Anaconda Prompt
+# writeClipboard(
+# paste0('python ',
+#                file.path(path.expand(code_loc), 'utility', 'DF_samlapi_formauth_adfs3_windows.py'))
+#         )
 
 # Trying new version
 
@@ -53,9 +52,10 @@ writeClipboard(
 system(paste0('aws --profile sdc s3 ls ', auto_export_bucket))
 
 writeClipboard(
-paste0('aws --profile sdc s3 ls ', auto_export_bucket))
+paste0('aws --profile sdc-token s3 ls ', auto_export_bucket))
 
-paste0('aws --profile sdc s3 ls ', auto_export_bucket, Sys.Date(), '/')
+writeClipboard(
+  paste0('aws --profile sdc s3 ls ', auto_export_bucket, Sys.Date(), '/'))
 
 # If get 'config profile could not be found', then re-run profile setup script.
 # TODO: figure out why this works in Git Bash or Anaconda Prompt but not in R

@@ -70,10 +70,16 @@ co_date_count_full <- d_full %>%
 
 
 co_date_count_full <- d_full %>%
+  ungroup() %>%
   group_by(date) %>%
   summarize(total_Waze_count = sum(count, na.rm = T),
             count_NA = sum(is.na(count)))
 
+ggplot(co_date_count_full, aes(x = date, y = total_Waze_count)) + 
+  geom_line()
+
+# Last 10 days
+co_date_count_full[(nrow(co_date_count_full)-10):nrow(co_date_count_full),]
 
 # Assess completeness ---- 
 
@@ -187,8 +193,6 @@ nw_sum <- nw %>%
 ggplot(nw_sum, aes(x = week, y = Total_Waze_20)) + geom_line()
 
 # How many counties are not in a CSA but do have useful data consistently? ----
-
-central_csa_fips <- 
 
 d_notcsa <- d %>%
   filter(!fips %in% unique(d_csa$fips))

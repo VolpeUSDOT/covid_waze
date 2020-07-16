@@ -31,7 +31,7 @@ if (!dir.exists(local_dir)) {
 # using Reticulate ----
 
 # Refresh credentials 
-reticulate::source_python(file =  file.path(path.expand(code_loc),
+reticulate::source_python(file = file.path(path.expand(code_loc),
             'utility',
            'waze_token_refresh.py'),
            envir = 'r-reticulate')
@@ -47,6 +47,26 @@ system(
          ' ',
          path.expand(local_dir), '/',
          'Waze_2020_MSA_day.csv')
+)
+
+system(
+  paste0('aws --profile sdc-token s3 cp ', 
+         auto_export_bucket, 
+         Sys.Date(), '/',
+         'Waze_2020_MSA_week_county.csv',
+         ' ',
+         path.expand(local_dir), '/',
+         'Waze_2020_MSA_week_county.csv')
+)
+
+system(
+  paste0('aws --profile sdc-token s3 cp ', 
+         auto_export_bucket, 
+         Sys.Date(), '/',
+         'Waze_2020_MSA_day_county.csv',
+         ' ',
+         path.expand(local_dir), '/',
+         'Waze_2020_MSA_day_county.csv')
 )
 
 system(

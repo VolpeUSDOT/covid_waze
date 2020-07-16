@@ -52,3 +52,11 @@ a few stories that capture their imagination, show them the value for their
 
 - Crash data correspondence
  + Crash indicator historically for the strength of the relationships in different places (and by road functional class)
+ 
+ 
+## 2020-07-14
+
+- National week: sum only for FIPS in a CBSA, Metropolitan
+- National day: Same, also make sure that bl2020 is available as well, as well as _nf and non-nf versions
+- Stop making Index_cleaned
+ 

@@ -48,26 +48,26 @@ system(
          path.expand(local_dir), '/',
          'Waze_2020_MSA_day.csv')
 )
-
-system(
-  paste0('aws --profile sdc-token s3 cp ', 
-         auto_export_bucket, 
-         Sys.Date(), '/',
-         'Waze_2020_MSA_week_county.csv',
-         ' ',
-         path.expand(local_dir), '/',
-         'Waze_2020_MSA_week_county.csv')
-)
-
-system(
-  paste0('aws --profile sdc-token s3 cp ', 
-         auto_export_bucket, 
-         Sys.Date(), '/',
-         'Waze_2020_MSA_day_county.csv',
-         ' ',
-         path.expand(local_dir), '/',
-         'Waze_2020_MSA_day_county.csv')
-)
+# 
+# system(
+#   paste0('aws --profile sdc-token s3 cp ', 
+#          auto_export_bucket, 
+#          Sys.Date(), '/',
+#          'Waze_2020_MSA_week_county.csv',
+#          ' ',
+#          path.expand(local_dir), '/',
+#          'Waze_2020_MSA_week_county.csv')
+# )
+# 
+# system(
+#   paste0('aws --profile sdc-token s3 cp ', 
+#          auto_export_bucket, 
+#          Sys.Date(), '/',
+#          'Waze_2020_MSA_day_county.csv',
+#          ' ',
+#          path.expand(local_dir), '/',
+#          'Waze_2020_MSA_day_county.csv')
+# )
 
 system(
   paste0('aws --profile sdc-token s3 cp ', 

@@ -20,37 +20,36 @@ d_full <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_Covid_joined.
                    col_types = cols(cases = col_double(),
                                     deaths = col_double()))    
 
-d <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_Index_cleaned.csv'),
-              col_types = cols(cases = col_double(),
-                               deaths = col_double()))       
+# d <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_Index_cleaned.csv'),
+#               col_types = cols(cases = col_double(),
+#                                deaths = col_double()))       
 
 nw <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_National_week.csv'))       
 
 
-# Daily CSA
+# Daily MSA
 
-d_csa <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_MSA_day.csv'),
-                  col_types = cols(Metropolitan.Division.Code = col_character(),
-                                   Metropolitan.Division.Title = col_character(),
-                                   cases = col_double(),
-                                   deaths = col_double()))   
+d_msa <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_MSA_day.csv'),
+                  col_types = cols(dowavg19_ACCIDENT = col_double()))   
 
 
 # Summarize for tests ----
 
-date_count <- d %>%
+date_count <- d_msa %>%
   group_by(date) %>%
   summarize(total_Waze_count = sum(count_ACCIDENT, count_JAM, count_WEATHERHAZARD, na.rm = T),
             count_NA = sum(is.na(count_ACCIDENT), is.na(count_JAM), is.na(count_WEATHERHAZARD)))
 
 
-date_count_full <- d_full %>%
-  group_by(date) %>%
-  summarize(total_Waze_count = sum(count, na.rm = T),
-            count_NA = sum(is.na(count)))
+# date_count_full <- d_full %>%
+#   group_by(date) %>%
+#   summarize(total_Waze_count = sum(count, na.rm = T),
+#             count_NA = sum(is.na(count)))
 
 
-d = d[order(d$fips, d$date),]
+d = d_msa
+
+d = d[order(d$CBSA.Code, d$date),]
 
 d$change_crash = with(d, (count_ACCIDENT - dplyr::lag(count_ACCIDENT) ) / count_ACCIDENT)
 d$change_jam = with(d, (count_JAM - dplyr::lag(count_JAM) ) / count_JAM)
@@ -59,8 +58,8 @@ d$change_weh = with(d, (count_WEATHERHAZARD - dplyr::lag(count_WEATHERHAZARD) ) 
 d$mean_change = rowSums(d[,c('change_crash', 'change_jam', 'change_weh')], na.rm = T)/3
 
 # test
-d %>% dplyr::select(fips, date, count_ACCIDENT, change_crash, count_JAM, change_jam, mean_change) %>% 
-  filter(fips == '01097')
+d %>% dplyr::select(CBSA.Code, date, count_ACCIDENT, change_crash, count_JAM, change_jam, mean_change) %>% 
+  filter(grepl('Philadelphia', d$CBSA.Title))
 
 
 co_date_count_full <- d_full %>%
@@ -87,7 +86,7 @@ co_date_count_full[(nrow(co_date_count_full)-10):nrow(co_date_count_full),]
 
 d_change = d %>%
   ungroup() %>%
-  group_by(fips) %>%
+  group_by(CBSA.Code) %>%
   summarize(n_daily_change_200 = sum(abs(mean_change) > 2),
             n_daily_change_500 = sum(abs(mean_change) > 5),
             n_daily_change_1000 = sum(abs(mean_change) > 10))
@@ -108,7 +107,7 @@ cat(n_counties_with_1000_change, 'of', n_counties_total, 'counties had more than
 # Compare baseline threshold and non-threshold ----
 
 co_NA_count = d %>%
-  group_by(fips) %>%
+  group_by(CBSA.Code) %>%
   summarize(NA_crash_threshold = sum(is.na(bl2020_mean_ACCIDENT)),
             NA_jam_threshold = sum(is.na(bl2020_mean_JAM)),
             NA_weh_threshold = sum(is.na(bl2020_mean_WEATHERHAZARD)),
@@ -118,11 +117,11 @@ co_NA_count = d %>%
   )
 
 # Test
-d %>% filter(fips == '01005') %>% select(fips, date, 
+d %>% filter(CBSA.Code == '47900') %>% select(CBSA.Code, date, 
                                          bl2020_mean_ACCIDENT, bl2020_mean_ACCIDENT_nf,
                                          bl2020_mean_JAM, bl2020_mean_JAM_nf)
 
-co_NA_count %>% filter(fips == '01005')
+co_NA_count %>% filter(CBSA.Code == '47900')
 
 ggplot(co_NA_count, aes(x = NA_crash_threshold, y = NA_crash_nonthreshold)) +
   geom_count() +
@@ -186,8 +185,8 @@ nw <- left_join(nw, nat_bl, by = 'week')
 
 nw_sum <- nw %>% 
   group_by(week) %>%
-  summarize(Total_Waze_20 = sum(weeksum20_ACCIDENT, weeksum20_JAM, weeksum20_WEATHERHAZARD),
-            Total_Waze_BL = sum(bl2020_crash_tot, bl2020_weh_tot, bl2020_jam_tot),
+  summarize(Total_Waze_20 = sum(weeksum20_ACCIDENT, weeksum20_JAM, weeksum20_WEATHERHAZARD, na.rm = T),
+            Total_Waze_BL = sum(bl2020_crash_tot, bl2020_weh_tot, bl2020_jam_tot, na.rm = T),
             pct_ch = ( Total_Waze_20 - Total_Waze_BL ) / Total_Waze_BL)
 
 ggplot(nw_sum, aes(x = week, y = Total_Waze_20)) + geom_line()
@@ -242,7 +241,7 @@ ggplot(d_ex, aes(x = date, y = count_ACCIDENT+count_WEATHERHAZARD+count_JAM)) + 
 
 # How many counties are in Metro Statistical Areas?
 
-dx <- d_csa[!duplicated(d_csa$fips),]
+dx <- d_msa[!duplicated(d_msa$CBSA.Code),]
 
 table(dx$Metropolitan.Micropolitan.Statistical.Area == 'Metropolitan Statistical Area')
 

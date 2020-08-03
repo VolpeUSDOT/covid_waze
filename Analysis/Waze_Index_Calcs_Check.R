@@ -29,37 +29,30 @@ output.loc = 'Output'
 latest_refresh_day = max(dir('Output')[grep('2020-', dir('Output'))]) # e.g. '2020-05-06'
 
 nw <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_National_week.csv'))       
+nd <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_National_day.csv'))       
 
-# 
-# # Daily MSA
-# 
-# d_MSA_day <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_MSA_day.csv'),
-#                   col_types = cols(Metropolitan.Division.Code = col_character(),
-#                                    Metropolitan.Division.Title = col_character(),
-#                                    cases = col_double(),
-#                                    deaths = col_double(),
-#                                    dowavg19_ACCIDENT = col_double(),
-#                                    dowavg19_JAM = col_double(),
-#                                    dowavg19_WEATHERHAZARD = col_double(),
-#                                    bl2020_mean_ACCIDENT = col_double(),
-#                                    bl2020_mean_JAM = col_double(),
-#                                    bl2020_mean_WEATHERHAZARD = col_double()
-#                                    ))   
-# 
-# # Weekly MSA
-# 
-# d_MSA_week <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_MSA_week.csv'),
-#                       col_types = cols(Metropolitan.Division.Code = col_character(),
-#                                        Metropolitan.Division.Title = col_character(),
-#                                        cases = col_double(),
-#                                        deaths = col_double(),
-#                                        dowavg19_ACCIDENT = col_double(),
-#                                        dowavg19_JAM = col_double(),
-#                                        dowavg19_WEATHERHAZARD = col_double(),
-#                                        bl2020_mean_ACCIDENT = col_double(),
-#                                        bl2020_mean_JAM = col_double(),
-#                                        bl2020_mean_WEATHERHAZARD = col_double()
-#                       ))   
+ 
+# Daily MSA
+
+d_MSA_day <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_MSA_day.csv'),
+                  col_types = cols(dowavg19_ACCIDENT = col_double(),
+                                   dowavg19_JAM = col_double(),
+                                   dowavg19_WEATHERHAZARD = col_double(),
+                                   bl2020_mean_ACCIDENT = col_double(),
+                                   bl2020_mean_JAM = col_double(),
+                                   bl2020_mean_WEATHERHAZARD = col_double()
+                                   ))
+
+# Weekly MSA
+
+d_MSA_week <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_MSA_week.csv'),
+                      col_types = cols(weeksum19_ACCIDENT = col_double(),
+                                       weeksum19_JAM = col_double(),
+                                       weeksum19_WEATHERHAZARD = col_double(),
+                                       bl2020_mean_ACCIDENT = col_double(),
+                                       bl2020_mean_JAM = col_double(),
+                                       bl2020_mean_WEATHERHAZARD = col_double()
+                      ))
 
 
 # Summarize to week ----
@@ -77,3 +70,25 @@ week_index_calcs <- nw %>%
             pct_ch_from_prev_week_crash = (sum_crash_20 - sum_crash_20_lag) / sum_crash_20_lag)
 
 View(week_index_calcs)
+
+# Sanity checks ----
+
+nd %>% filter(state == 'CA') %>% View()
+nw %>% filter(state == 'CA') %>% View()
+
+nw_sum <- nw %>% 
+  group_by(week) %>%
+  summarize(cra = sum(weeksum20_ACCIDENT, na.rm = T),
+            jam = sum(weeksum20_JAM, na.rm = T),
+            weh = sum(weeksum20_WEATHERHAZARD, na.rm = T),
+            Total_Waze_20 = sum(cra, jam, weh),
+            Total_Waze_BL = sum(bl2020_mean_ACCIDENT, bl2020_mean_JAM, bl2020_mean_WEATHERHAZARD, na.rm = T),
+            pct_ch = ( Total_Waze_20 - Total_Waze_BL ) / Total_Waze_BL)
+
+ggplot(nw_sum, aes(x = week, y = Total_Waze_20)) + geom_line()
+
+ggplot(nw_sum, aes(x = week, y = cra)) + geom_line()
+
+ggplot(nw_sum, aes(x = week, y = weh)) + geom_line()
+
+

@@ -26,6 +26,8 @@ library(readr)
 input.loc = 'Data'
 output.loc = 'Output'
 
+drive.output = '//vntscex.local/DFS/Projects/PROJ-OS62A1/SDI Waze Phase 2/Data/COVID'
+
 latest_refresh_day = max(dir('Output')[grep('2020-', dir('Output'))]) # e.g. '2020-05-06'
 
 cat(latest_refresh_day)
@@ -57,10 +59,8 @@ d_MSA_week <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_MSA_
 
 # Summarize to week ----
 
-# in process -- also do 2019 measures and early 2020 baseline
-
 # <<>><<>><<>><<>>
-# Weighted percent change at a a national level
+# Weighted percent change at a national level. Below is the Tableau calculation for reference
  
 # WoY - %CHANGE - JAMS - COUNTRY nf
 # 
@@ -123,7 +123,7 @@ nw <- nw %>%
            ) %>%
   ungroup()
 
-View(nw)
+# View(nw)
 
 # Test: CA in week 6 had these characteristics 
 # WoY_Weight_Crash_19: 0.33808351
@@ -141,7 +141,8 @@ total_6 <- nw %>% filter(week == '6') %>%
 
 ca_6 / total_6 # checks out
 
-# Use these weights
+# First calculate the percent changes for *each* state, each week
+# Then use the weights, calculated above, to produce a weghted mean of the state-wise percent changes at the national level, by week
 
 week_index_calcs <- nw %>%
   ungroup() %>%
@@ -176,17 +177,21 @@ week_index_calcs <- nw %>%
     
     ) 
   
-View(week_index_calcs)
+# View(week_index_calcs)
+
+# Write this weekly index file out to the Volpe shared drive
+
+write.csv(week_index_calcs, file = file.path(drive.output, 'Weekly_Covid_Outputs.csv'), row.names = F)
+
 
 # Output table for COVID-19 Passenger Impact ----
 
-# Week ending
+# Week 
 # Lowest (count of jams)
 # Peak (count of jams)
 # Current (count of jams)
 # Baseline (count of jams)
 # Change from baseline (this week of 2019)
-
 
 output_table = week_index_calcs %>%
   filter(week == max(week)) %>%
@@ -209,7 +214,7 @@ peak = week_index_calcs %>%
 
 output = data.frame(output_table, lowest, peak)
 
-write.csv(output, file = file.path())
+write.csv(output, file = file.path(drive.output, 'Output_for_BTS.csv'), row.names = F, append = T)
 
 # Sanity checks ----
 
@@ -231,4 +236,4 @@ ggplot(nw_sum, aes(x = week, y = cra)) + geom_line()
 
 ggplot(nw_sum, aes(x = week, y = weh)) + geom_line()
 
-# Tables for BTS Card ----
+

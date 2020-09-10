@@ -28,10 +28,10 @@ output.loc = 'Output'
 
 latest_refresh_day = max(dir('Output')[grep('2020-', dir('Output'))]) # e.g. '2020-05-06'
 
+cat(latest_refresh_day)
+
 nw <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_National_week.csv'))       
 nd <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_National_day.csv'))       
-
- 
 # Daily MSA
 
 d_MSA_day <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_MSA_day.csv'),
@@ -58,23 +58,163 @@ d_MSA_week <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_MSA_
 # Summarize to week ----
 
 # in process -- also do 2019 measures and early 2020 baseline
-week_index_calcs <- nw %>%
-  group_by(week) %>%
-  summarize(sum_crash_20 = sum(weeksum20_ACCIDENT_nf, na.rm = T),
-            sum_weh_20 = sum(weeksum20_WEATHERHAZARD_nf, na.rm = T),
-            sum_jam_20 = sum(weeksum20_JAM_nf, na.rm = T),
-            sum_crash_20_lag = sum(lag1_weeksum20_ACCIDENT_nf, na.rm = T),
-            sum_weh_20_lag = sum(lag1_weeksum20_WEATHERHAZARD_nf, na.rm = T),
-            sum_jam_20_lag = sum(lag1_weeksum20_JAM_nf, na.rm = T),
-            
-            pct_ch_from_prev_week_crash = (sum_crash_20 - sum_crash_20_lag) / sum_crash_20_lag)
 
+# <<>><<>><<>><<>>
+# Weighted percent change at a a national level
+ 
+# WoY - %CHANGE - JAMS - COUNTRY nf
+# 
+# Role:
+#   Continuous Measure
+# Type:
+#   Calculated Field
+# Status:
+#   Valid
+# 
+# Formula
+# // state factor is the ratio between the individual state and other states
+# // difference between the same week in 2019 and the sum of jams events * state factor
+# 
+# 
+# // percent change of crashes from comparable week in 2019.
+# 
+# (([_WoY WEIGHT - JAMS - STATE nf]
+#   * (SUM([weeksum20 JAM nf]) - SUM([weeksum19 JAM nf])) 
+#   / SUM([weeksum19 JAM nf]))) * 100
+# 
+# 
+# // NOT FILTERED -- WEIGHTED
+# The domain for this field has not been loaded. Click "Load" to retrieve
+
+# <<>><<>><<>><<>>
+# Where the week of year Weight field is calculated as follows:
+
+# _WoY WEIGHT - JAMS - STATE nf
+# 
+# Role:
+#   Continuous Measure
+# Type:
+#   Calculated Field
+# Status:
+#   Valid
+# 
+# Formula
+# // state-based factor for change from same week in 2019
+# // this value is then multiplied by the sum of jams within a state
+# 
+# // this uses the unfiltered (raw) baseline state data
+# 
+# 
+# SUM([weeksum19 JAM nf])
+# / SUM({ EXCLUDE [State Abbr] : SUM([weeksum19 JAM nf]) } )
+# The domain for this field has not been loaded. Click "Load" to retrieve.
+
+nw <- nw %>%
+  ungroup %>%
+  group_by(week) %>%
+    mutate(WoY_Weight_Jams_19 = weeksum19_JAM_nf / sum(weeksum19_JAM_nf, na.rm=T),
+           WoY_Weight_Crash_19 = weeksum19_ACCIDENT_nf / sum(weeksum19_ACCIDENT_nf, na.rm=T),
+           
+           WoY_Weight_Jams_bl = bl2020_mean_JAM_nf / sum(bl2020_mean_JAM_nf, na.rm=T),
+           WoY_Weight_Crash_bl = bl2020_mean_ACCIDENT_nf / sum(bl2020_mean_ACCIDENT_nf, na.rm=T),
+           
+           WoY_Weight_Jams_lag1 = lag1_weeksum20_JAM_nf / sum(lag1_weeksum20_JAM_nf, na.rm=T),
+           WoY_Weight_Crash_lag1 = lag1_weeksum20_ACCIDENT_nf / sum(lag1_weeksum20_ACCIDENT_nf, na.rm=T)
+           ) %>%
+  ungroup()
+
+View(nw)
+
+# Test: CA in week 6 had these characteristics 
+# WoY_Weight_Crash_19: 0.33808351
+# WoY_Weight_Crash_bl: 0.29436261
+# WoY_Weight_Crash_lag1: 0.31452333
+
+ca_6 <- nw %>% filter(state == 'CA'  & week == '6') %>%
+  select(weeksum19_ACCIDENT, bl2020_mean_ACCIDENT, lag1_weeksum20_ACCIDENT)
+
+# and totals 
+total_6 <- nw %>% filter(week == '6') %>%
+  summarize(sum(weeksum19_ACCIDENT, na.rm = T), 
+            sum(bl2020_mean_ACCIDENT, na.rm = T),
+            sum(lag1_weeksum20_ACCIDENT, na.rm = T))
+
+ca_6 / total_6 # checks out
+
+# Use these weights
+
+week_index_calcs <- nw %>%
+  ungroup() %>%
+  mutate(
+    pct_ch_from_prev_week_jam = 100 *  ( (weeksum20_JAM_nf - lag1_weeksum20_JAM_nf) / lag1_weeksum20_JAM_nf ),
+    pct_ch_from_prev_week_crash = 100 *  ( (weeksum20_ACCIDENT_nf - lag1_weeksum20_ACCIDENT_nf) / lag1_weeksum20_ACCIDENT_nf ),
+
+    pct_ch_from_2019_week_jam = 100 *  ( (weeksum20_JAM_nf - weeksum19_JAM_nf) / weeksum19_JAM_nf ),
+    pct_ch_from_2019_week_crash = 100 *  ( (weeksum20_ACCIDENT_nf - weeksum19_ACCIDENT_nf) / weeksum19_ACCIDENT_nf ),
+
+    pct_ch_from_2020bl_week_jam = 100 *  ( (weeksum20_JAM_nf - bl2020_mean_JAM_nf) / bl2020_mean_JAM_nf ),
+    pct_ch_from_2020bl_week_crash = 100 *  ( (weeksum20_ACCIDENT_nf - bl2020_mean_ACCIDENT_nf) / bl2020_mean_ACCIDENT_nf )
+    
+  ) %>%
+  group_by(week) %>%
+  summarize(
+    
+    weekly_sum_20_jam = sum(weeksum20_JAM_nf, na.rm = T),
+    
+    weekly_sum_19_jam = sum(weeksum19_JAM_nf, na.rm = T),
+
+    change_from_baseline_jam = 100 * (weekly_sum_20_jam - weekly_sum_19_jam) / weekly_sum_19_jam,
+    
+    pct_ch_from_prev_week_jam = weighted.mean(pct_ch_from_prev_week_jam, w = WoY_Weight_Jams_lag1),
+    pct_ch_from_prev_week_crash = weighted.mean(pct_ch_from_prev_week_crash, w = WoY_Weight_Crash_lag1),
+    
+    pct_ch_from_2019_week_jam = weighted.mean(pct_ch_from_2019_week_jam, w = WoY_Weight_Jams_19),
+    pct_ch_from_2019_week_crash = weighted.mean(pct_ch_from_2019_week_crash, w = WoY_Weight_Crash_19),
+    
+    pct_ch_from_2020bl_week_jam = weighted.mean(pct_ch_from_2020bl_week_jam, w = WoY_Weight_Jams_bl),
+    pct_ch_from_2020bl_week_crash = weighted.mean(pct_ch_from_2020bl_week_crash, w = WoY_Weight_Crash_bl),
+    
+    ) 
+  
 View(week_index_calcs)
+
+# Output table for COVID-19 Passenger Impact ----
+
+# Week ending
+# Lowest (count of jams)
+# Peak (count of jams)
+# Current (count of jams)
+# Baseline (count of jams)
+# Change from baseline (this week of 2019)
+
+
+output_table = week_index_calcs %>%
+  filter(week == max(week)) %>%
+  select(week, weekly_sum_20_jam, weekly_sum_19_jam, change_from_baseline_jam)
+
+lowest = week_index_calcs %>%
+  filter(week >= 10) %>%
+  filter(weekly_sum_20_jam == min(weekly_sum_20_jam)) %>%
+  select(week, weekly_sum_20_jam) %>%
+  rename(week_of_lowest = week, 
+         lowest_weekly_sum_20_jam = weekly_sum_20_jam)
+
+peak = week_index_calcs %>%
+  filter(week >= lowest$week_of_lowest) %>%
+  filter(weekly_sum_20_jam == max(weekly_sum_20_jam)) %>%
+  select(week, weekly_sum_20_jam) %>%
+  rename(week_of_peak = week, 
+         peak_weekly_sum_20_jam = weekly_sum_20_jam)
+
+
+output = data.frame(output_table, lowest, peak)
+
+write.csv(output, file = file.path())
 
 # Sanity checks ----
 
-nd %>% filter(state == 'CA') %>% View()
-nw %>% filter(state == 'CA') %>% View()
+#nd %>% filter(state == 'CA') %>% View()
+#nw %>% filter(state == 'CA') %>% View()
 
 nw_sum <- nw %>% 
   group_by(week) %>%
@@ -91,4 +231,4 @@ ggplot(nw_sum, aes(x = week, y = cra)) + geom_line()
 
 ggplot(nw_sum, aes(x = week, y = weh)) + geom_line()
 
-
+# Tables for BTS Card ----

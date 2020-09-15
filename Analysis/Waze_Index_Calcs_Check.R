@@ -160,11 +160,11 @@ week_index_calcs$week_ending_date = week_ending_date
 # Below is code to just calculate one row, the latest week
 
 output_table = week_index_calcs %>%
-  filter(week == max(week)) %>%
-  select(week, week_ending_date, weekly_sum_20_jam, weekly_sum_19_jam, change_from_baseline_jam)
+  filter(week == max(week)) %>% 
+  select(week, week_ending_date, weekly_sum_20_jam, weekly_sum_19_jam, change_from_19_jam)
 
 lowest = week_index_calcs %>%
-  filter(week >= 10) %>%
+  filter(week >= 10) %>%  
   filter(weekly_sum_20_jam == min(weekly_sum_20_jam)) %>%
   select(week, weekly_sum_20_jam) %>%
   rename(week_of_lowest = week, 
@@ -180,12 +180,10 @@ peak = week_index_calcs %>%
 
 output = data.frame(output_table, lowest, peak)
 
-write.csv(output, file = file.path(drive.output, 'Output_for_BTS.csv'), row.names = F, append = T)
+write.table(output, file = file.path(drive.output, 'Output_for_BTS.csv'), 
+            row.names = F, col.names = F, 
+            sep = ",", qmethod = "double", append = T)
 
-
-output = data.frame(output_table, lowest, peak)
-
-write.csv(output, file = file.path(drive.output, 'Output_for_BTS.csv'), row.names = F, append = T)
 
 # Sanity checks ----
 

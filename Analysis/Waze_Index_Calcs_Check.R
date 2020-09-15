@@ -23,6 +23,8 @@
 library(tidyverse)
 library(readr)
 
+setwd("~/GitHub/covid_waze/") #Erika needed
+
 input.loc = 'Data'
 output.loc = 'Output'
 
@@ -34,8 +36,8 @@ cat(latest_refresh_day)
 
 nw <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_National_week.csv'))       
 nd <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_National_day.csv'))       
-# Daily MSA
 
+# Daily MSA
 d_MSA_day <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_MSA_day.csv'),
                   col_types = cols(dowavg19_ACCIDENT = col_double(),
                                    dowavg19_JAM = col_double(),
@@ -142,7 +144,7 @@ total_6 <- nw %>% filter(week == '6') %>%
 ca_6 / total_6 # checks out
 
 # First calculate the percent changes for *each* state, each week
-# Then use the weights, calculated above, to produce a weghted mean of the state-wise percent changes at the national level, by week
+# Then use the weights, calculated above, to produce a weighted mean of the state-wise percent changes at the national level, by week
 
 week_index_calcs <- nw %>%
   ungroup() %>%
@@ -210,6 +212,11 @@ peak = week_index_calcs %>%
   select(week, weekly_sum_20_jam) %>%
   rename(week_of_peak = week, 
          peak_weekly_sum_20_jam = weekly_sum_20_jam)
+
+
+output = data.frame(output_table, lowest, peak)
+
+write.csv(output, file = file.path(drive.output, 'Output_for_BTS.csv'), row.names = F, append = T)
 
 
 output = data.frame(output_table, lowest, peak)

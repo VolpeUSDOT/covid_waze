@@ -5,12 +5,18 @@
 # C:/Users/{user.name}/AppData/Local/r-miniconda, or you can choose another version of Python installed. See miniconda_path().
 # See https://rstudio.github.io/reticulate/articles/python_packages.html
 
-# First time:
-# conda_create('r-reticulate')
-# conda_install('requests)
-# conda_install(envname = 'r-reticulate', packages = c('requests', 'configparser'))
 
 library(reticulate)
+
+# First time: Install the conda environment with necessary packages
+
+if(!dir.exists(
+      file.path(dirname(path.expand('~/')),
+              'AppData', 'Local', 'r-miniconda'))) {
+  conda_create('r-reticulate')
+  conda_install('requests')
+  conda_install(envname = 'r-reticulate', packages = c('requests', 'configparser'))
+  }
 
 use_virtualenv("r-reticulate")
 
@@ -26,15 +32,19 @@ if (!dir.exists(local_dir)) {
   dir.create(local_dir) 
   }
 
-# path.expand(local_dir)
 
 # using Reticulate ----
+
+if(!file.exists(file.path(path.expand(code_loc),
+                          'utility',
+                          'waze_token_refresh.py'))){
+  stop('Contact sdc-support@dot.gov to set up auto-export permissions and be given the appropriate authentication script.')
+}
 
 # Refresh credentials 
 reticulate::source_python(file = file.path(path.expand(code_loc),
             'utility',
-           'waze_token_refresh.py'),
-           envir = 'r-reticulate')
+           'waze_token_refresh.py'))
 
 system(
   paste0('aws --profile sdc-token s3 ls ', auto_export_bucket, Sys.Date(), '/'))
@@ -48,26 +58,6 @@ system(
          path.expand(local_dir), '/',
          'Waze_2020_MSA_day.csv')
 )
-# 
-# system(
-#   paste0('aws --profile sdc-token s3 cp ', 
-#          auto_export_bucket, 
-#          Sys.Date(), '/',
-#          'Waze_2020_MSA_week_county.csv',
-#          ' ',
-#          path.expand(local_dir), '/',
-#          'Waze_2020_MSA_week_county.csv')
-# )
-# 
-# system(
-#   paste0('aws --profile sdc-token s3 cp ', 
-#          auto_export_bucket, 
-#          Sys.Date(), '/',
-#          'Waze_2020_MSA_day_county.csv',
-#          ' ',
-#          path.expand(local_dir), '/',
-#          'Waze_2020_MSA_day_county.csv')
-# )
 
 system(
   paste0('aws --profile sdc-token s3 cp ', 
@@ -125,12 +115,6 @@ system(
 # Using Anaconda Prompt ----
 
 if(MANUAL){
-  
-  # # Contintue to paste this into Anaconda Prompt
-  # writeClipboard(
-  # paste0('python ',
-  #                file.path(path.expand(code_loc), 'utility', 'DF_samlapi_formauth_adfs3_windows.py'))
-  #         )
   
   # Trying new version
   writeClipboard(

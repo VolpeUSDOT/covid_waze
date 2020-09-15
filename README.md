@@ -27,6 +27,8 @@ Some simplifying assumptions:
 
 ## How to use this code
 
+Launch RStudio using the `covid_waze.Rproj` file.
+
 1. Run `Prep/Join_Data.R`. This will create the daily, aggregated counts of Waze alerts by count, fill in 0's as appropriate for Waze alert types where at least one other alert type was noted in that county, for that day, and join with nytimes covid data.
 
 2a. `Analysis/Generate_expected_counts.R`

@@ -107,16 +107,16 @@ week_index_calcs <- nw %>%
     
     weekly_sum_19_jam = sum(weeksum19_JAM_nf, na.rm = T),
 
-    change_from_baseline_jam = 100 * (weekly_sum_20_jam - weekly_sum_19_jam) / weekly_sum_19_jam,
+    change_from_19_jam = 100 * (weekly_sum_20_jam - weekly_sum_19_jam) / weekly_sum_19_jam,
     
     pct_ch_from_prev_week_jam = weighted.mean(pct_ch_from_prev_week_jam, w = WoY_Weight_Jams_lag1),
-    pct_ch_from_prev_week_crash = weighted.mean(pct_ch_from_prev_week_crash, w = WoY_Weight_Crash_lag1),
+    #pct_ch_from_prev_week_crash = weighted.mean(pct_ch_from_prev_week_crash, w = WoY_Weight_Crash_lag1),
     
     pct_ch_from_2019_week_jam = weighted.mean(pct_ch_from_2019_week_jam, w = WoY_Weight_Jams_19),
-    pct_ch_from_2019_week_crash = weighted.mean(pct_ch_from_2019_week_crash, w = WoY_Weight_Crash_19),
+    #pct_ch_from_2019_week_crash = weighted.mean(pct_ch_from_2019_week_crash, w = WoY_Weight_Crash_19),
     
     pct_ch_from_2020bl_week_jam = weighted.mean(pct_ch_from_2020bl_week_jam, w = WoY_Weight_Jams_bl),
-    pct_ch_from_2020bl_week_crash = weighted.mean(pct_ch_from_2020bl_week_crash, w = WoY_Weight_Crash_bl),
+    #pct_ch_from_2020bl_week_crash = weighted.mean(pct_ch_from_2020bl_week_crash, w = WoY_Weight_Crash_bl),
     
     ) 
   

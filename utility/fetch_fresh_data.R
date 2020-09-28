@@ -112,6 +112,10 @@ system(
 )
 
 
+# Produce weekly index calculations ----
+
+source('Analysis/Waze_Index_Calcs_Check.R')
+
 # Using Anaconda Prompt ----
 
 if(MANUAL){

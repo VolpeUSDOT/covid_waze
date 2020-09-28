@@ -180,7 +180,7 @@ peak = week_index_calcs %>%
 
 output = data.frame(output_table, lowest, peak)
 
-write.table(output, file = file.path(drive.output, 'Output_for_BTS.csv'), 
+write.table(output, file = file.path(drive.output, 'Output_for_BTS_National.csv'), 
             row.names = F, col.names = F, 
             sep = ",", qmethod = "double", append = T)
 

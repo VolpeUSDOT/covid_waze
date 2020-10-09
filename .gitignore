@@ -15,3 +15,4 @@ Analysis/Plotting_by_MSA_Impact_for_dashboard_cache/*
 utility/waze_token_refresh.sh
 utility/waze_token_refresh.py
 *.xls
+utility/auto_export_waze.py

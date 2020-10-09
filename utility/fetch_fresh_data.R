@@ -1,5 +1,6 @@
-# Grab data from auto-export bucket and upload to box
+# Grab data from auto-export bucket and save to both local machine and network drive (for BTS outputs)
 # Depends on proper setup of SDC authentication script. Permissions are granted by SDC administrators.
+# Buckets updated for ECS
 
 # The auth script is a Python script. We can call it in R using reticulate. This depends on a miniconda installation at 
 # C:/Users/{user.name}/AppData/Local/r-miniconda, or you can choose another version of Python installed. See miniconda_path().
@@ -20,8 +21,7 @@ if(!dir.exists(
 
 use_virtualenv("r-reticulate")
 
-auto_export_bucket = 's3://prod-sdc-waze-autoexport-911061262852-us-east-1-bucket/alert/'
-
+auto_export_bucket = 's3://prod-sdc-waze-autoexport-004118380849/alert/'
 
 MANUAL = FALSE
 
@@ -32,12 +32,11 @@ if (!dir.exists(local_dir)) {
   dir.create(local_dir) 
   }
 
-
 # using Reticulate ----
 
 if(!file.exists(file.path(path.expand(code_loc),
                           'utility',
-                          'waze_token_refresh.py'))){
+                          'auto_export_waze.py'))){
   stop('Contact sdc-support@dot.gov to set up auto-export permissions and be given the appropriate authentication script.')
 }
 

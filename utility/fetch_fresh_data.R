@@ -43,7 +43,7 @@ if(!file.exists(file.path(path.expand(code_loc),
 # Refresh credentials 
 reticulate::source_python(file = file.path(path.expand(code_loc),
             'utility',
-           'waze_token_refresh.py'))
+           'auto_export_waze.py'))
 
 system(
   paste0('aws --profile sdc-token s3 ls ', auto_export_bucket, Sys.Date(), '/'))

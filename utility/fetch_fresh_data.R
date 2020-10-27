@@ -81,10 +81,17 @@ source('Analysis/Waze_Index_Calcs_Check.R')
 if(dir.exists(volpe_drive)){
   
   for(file in get_files){
+    print(paste('Copying', file))
+    
     file.copy(from = file.path(path.expand(local_dir), file),
               to = file.path(volpe_drive, file),
               overwrite = TRUE)
+    
+    print('... done \n')
     }
-} else {
+  
+  } else {
+  
     print('Connect to VPN and verify access to Volpe shared drive')
+  
   }

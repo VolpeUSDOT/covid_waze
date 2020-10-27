@@ -257,3 +257,49 @@ d_ex <- d %>%
 ggplot(d_ex, aes(x = date, y = count_ACCIDENT)) + geom_line()
 
 
+# Check North Dakota October 2020 issue ----
+d_ex <- d %>% 
+  filter(state == 'ND')
+
+ggplot(d_ex, aes(x = date, y = count_ACCIDENT+count_WEATHERHAZARD+count_JAM)) + geom_line()
+
+ggplot(d_ex, aes(x = date)) +
+  geom_line(aes(y = count_ACCIDENT), col = 'red') +
+  geom_line(aes(y = count_WEATHERHAZARD), col = 'blue') +
+  geom_line(aes(y = count_JAM), col = 'green') 
+
+
+# Check in full
+ggplot(d_full %>% filter(state == 'ND' & date > '2020-01-01'), 
+       aes(x = date, y = count)) +
+  geom_line() +
+  facet_wrap(.~ alert_type)
+
+ggplot(d_full %>% filter(state == 'ND' & date > '2020-10-01' & alert_type == 'WEATHERHAZARD' &
+                           fips %in% c('38017', '38059')), 
+       aes(x = date, y = count)) +
+  geom_line()+
+  facet_wrap(.~ fips)
+
+# Look at 2019 vs 2020 for Cass County, ND
+cass_19 = d_full %>% filter(state == 'ND' & 
+                              date >= '2019-10-01' &
+                              date <= '2019-10-30' &
+                              fips %in% c('38017')) 
+
+cass_20 = d_full %>% filter(state == 'ND' & 
+                              date >= '2020-10-01' &
+                              date <= '2020-10-30' &
+                              fips %in% c('38017')) 
+
+cass_19_20 <- rbind(cass_19, cass_20)
+
+cass_19_20 = cass_19_20 %>%
+  mutate(year = as.factor(year),
+         day_of_month = as.numeric(format(date, '%d')))
+
+ggplot(cass_19_20, aes(x = day_of_month, y = count, color = year)) +
+  geom_line(size = 2)+
+  facet_wrap(.~ alert_type) +
+  ggtitle('Cass County, ND, comparing 2019 and 2020 alert counts in October')
+

@@ -56,9 +56,16 @@ get_files = c('Waze_2020_MSA_day.csv',
               'Waze_2020_MSA_week.csv',
               'Waze_2020_National_day.csv',
               'Waze_2020_National_week.csv',
-              'Waze_Covid_joined.csv')
+              paste0('Waze_Covid_joined_', Sys.Date(), '.csv'))
 
 for(file in get_files){
+  
+  if(grepl(Sys.Date(), file)){
+    out_file = 'Waze_Full.csv'
+  } else {
+    out_file = file
+  }
+  
   system(
     paste0('aws --profile sdc-token s3 cp ', 
            auto_export_bucket, 
@@ -66,7 +73,7 @@ for(file in get_files){
            file,
            ' ',
            path.expand(local_dir), '/',
-           file)
+           out_file)
   )
   }
 

@@ -84,21 +84,22 @@ source('Analysis/Waze_Index_Calcs_Check.R')
 
 # Replace files on Volpe shared drive for Tableau ----
 
-# Check to see if on the VPN 
-if(dir.exists(volpe_drive)){
-  
-  for(file in get_files){
-    print(paste('Copying', file))
-    
-    file.copy(from = file.path(path.expand(local_dir), file),
-              to = file.path(volpe_drive, file),
-              overwrite = TRUE)
-    
-    print('... done \n')
-    }
-  
-  } else {
-  
-    print('Connect to VPN and verify access to Volpe shared drive')
-  
-  }
+# Too slow. Just copy manually. 
+# # Check to see if on the VPN 
+# if(dir.exists(volpe_drive)){
+#   
+#   for(file in get_files){
+#     print(paste('Copying', file))
+#     
+#     file.copy(from = file.path(path.expand(local_dir), file),
+#               to = file.path(volpe_drive, file),
+#               overwrite = TRUE)
+#     
+#     print('... done \n')
+#     }
+#   
+#   } else {
+#   
+#     print('Connect to VPN and verify access to Volpe shared drive')
+#   
+#   }

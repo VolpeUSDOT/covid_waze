@@ -16,7 +16,7 @@ output.loc = 'Output'
 
 latest_refresh_day = max(dir('Output')[grep('2020-', dir('Output'))]) # e.g. '2020-05-06'
 
-d_full <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_Covid_joined.csv'),
+d_full <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_Full.csv'),
                    col_types = cols(cases = col_double(),
                                     deaths = col_double()))    
 
@@ -157,14 +157,6 @@ ggplot(d_full %>% filter(state == 'DC' | state == 'DE'),
   ggtitle('DC and DE by alert types \n Full data set')
 
 
-# Covid case data check -----
-
-ggplot(d %>% filter(state == 'MA'), aes(x = date, y = cases)) + geom_line() + facet_wrap(~fips)
-
-
-ggplot(d %>% filter(state == 'MI'), aes(x = date, y = cases)) + geom_line() + facet_wrap(~fips)
-ggplot(d %>% filter(fips == '26163'), aes(x = date, y = cases)) + geom_line() + facet_wrap(~fips)
-
 # National-level number check ----
 
 # Get national-level baseline total. Same for every week, but adding week variable for merging
@@ -192,69 +184,78 @@ nw_sum <- nw %>%
 ggplot(nw_sum, aes(x = week, y = Total_Waze_20)) + geom_line()
 
 # How many counties are not in a CSA but do have useful data consistently? ----
-
-d_notcsa <- d %>%
-  filter(!fips %in% unique(d_csa$fips))
-
-ds <- d_notcsa %>%
-  ungroup() %>%
-  group_by(fips) %>%
-  summarize(good_crash = sum(count_ACCIDENT > 10, na.rm = T),
-            good_weh = sum(count_WEATHERHAZARD > 10, na.rm = T),
-            good_jam = sum(count_JAM > 10, na.rm = T),
-            n_days = n(),
-            enough_good_weh = (good_weh / n_days) > .2,    
-            enough_good_crash = (good_crash / n_days) > .2, 
-            enough_good_jam = (good_jam / n_days) > .2,  
-            mostly_good = enough_good_crash & enough_good_weh & enough_good_jam
-            )
-
-
-table(ds$enough_good_crash) # 1
-table(ds$enough_good_jam) # 6
-table(ds$enough_good_weh) # 268
-
-ds %>%
-  group_by(enough_good_crash, enough_good_weh, enough_good_jam) %>%
-  summarize(n())
+# Deprecated -- filtered to MSA already
+# d_notcsa <- d %>%
+#   filter(!fips %in% unique(d_msa$fips))
+# 
+# ds <- d_notcsa %>%
+#   ungroup() %>%
+#   group_by(fips) %>%
+#   summarize(good_crash = sum(count_ACCIDENT > 10, na.rm = T),
+#             good_weh = sum(count_WEATHERHAZARD > 10, na.rm = T),
+#             good_jam = sum(count_JAM > 10, na.rm = T),
+#             n_days = n(),
+#             enough_good_weh = (good_weh / n_days) > .2,    
+#             enough_good_crash = (good_crash / n_days) > .2, 
+#             enough_good_jam = (good_jam / n_days) > .2,  
+#             mostly_good = enough_good_crash & enough_good_weh & enough_good_jam
+#             )
+# 
+# 
+# table(ds$enough_good_crash) # 1
+# table(ds$enough_good_jam) # 6
+# table(ds$enough_good_weh) # 268
+# 
+# ds %>%
+#   group_by(enough_good_crash, enough_good_weh, enough_good_jam) %>%
+#   summarize(n())
 
 # Riverside county FIPS
-d_ex <- d %>% 
+d_ex <- d_full %>% 
   filter(fips == '06065')
 
-ggplot(d_ex, aes(x = date, y = count_ACCIDENT)) + geom_line()
+ggplot(d_ex, aes(x = date, y = count)) + 
+  geom_line() + 
+  facet_wrap(~alert_type, scales = 'free_y')
 
 # Polk county FIPS GA, a CBSA / Micro. Insufficient data.
 
-d_ex <- d %>% 
+d_ex <- d_full %>% 
   filter(fips == '13233')
 
-ggplot(d_ex, aes(x = date, y = count_ACCIDENT)) + geom_line()
+ggplot(d_ex, aes(x = date, y = count)) + 
+  geom_line() + 
+  facet_wrap(~alert_type, scales = 'free_y')
 
 
 # Floyd county GA, a CBSA / Metro. Still insufficient in this case
-d_ex <- d %>% 
+d_ex <- d_full %>% 
   filter(fips == '13115')
 
-ggplot(d_ex, aes(x = date, y = count_ACCIDENT+count_WEATHERHAZARD+count_JAM)) + geom_line()
+ggplot(d_ex, aes(x = date, y = count)) + 
+  geom_line() + 
+  facet_wrap(~alert_type, scales = 'free_y')
 
 
 # How many counties are in Metro Statistical Areas?
+# Deprecated -- d_msa already filtered to Metropolitan Statistical Areas
 
 dx <- d_msa[!duplicated(d_msa$CBSA.Code),]
 
-table(dx$Metropolitan.Micropolitan.Statistical.Area == 'Metropolitan Statistical Area')
+# table(dx$Metropolitan.Micropolitan.Statistical.Area == 'Metropolitan Statistical Area')
+# 
+# dxx <- dx[dx$Metropolitan.Micropolitan.Statistical.Area == 'Metropolitan Statistical Area',]
+# 
+# length(unique(dxx$CBSA.Title))
 
-dxx <- dx[dx$Metropolitan.Micropolitan.Statistical.Area == 'Metropolitan Statistical Area',]
+# A PR county -- all blank
 
-length(unique(dxx$CBSA.Title))
-
-# A PR county
-
-d_ex <- d %>% 
+d_ex <- d_full %>% 
   filter(fips == '72111')
 
-ggplot(d_ex, aes(x = date, y = count_ACCIDENT)) + geom_line()
+ggplot(d_ex, aes(x = date, y = count)) + 
+  geom_line() + 
+  facet_wrap(~alert_type, scales = 'free_y')
 
 
 # Check North Dakota October 2020 issue ----

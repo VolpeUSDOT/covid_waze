@@ -2,15 +2,14 @@
 # add any packages your scripts require here. Keep in alphabetical order.
 
 loadpacks <- c(
-  "doParallel",
-  "foreach",
-  "kableExtra",
-  "knitr",
-  "lmer",
-# "plotly",
-  "randomForest",
-  "tidyverse",
-  "usmap"
+  'dplyr', 
+  'tidyverse', 
+  'tidycensus', 
+  'viridis', 
+  'leaflet', 
+  'readr', 
+  'sp', 
+  'sf'
   )
 
 for(i in loadpacks){

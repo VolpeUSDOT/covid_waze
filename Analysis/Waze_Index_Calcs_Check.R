@@ -20,7 +20,7 @@ output.loc = 'Output'
 
 drive.output = '//vntscex.local/DFS/Projects/PROJ-OS62A1/SDI Waze Phase 2/Data/COVID'
 
-latest_refresh_day = max(dir('Output')[grep('2020-', dir('Output'))]) # e.g. '2020-05-06'
+latest_refresh_day = max(dir('Output')[grep(format(Sys.Date(), '%Y'), dir('Output'))]) # e.g. '2020-05-06'
 
 cat(latest_refresh_day)
 
@@ -54,7 +54,7 @@ d_MSA_week <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_MSA_
 
 nw <- nw %>%
   ungroup %>%
-  group_by(week) %>%
+  group_by(year, week) %>%
     mutate(WoY_Weight_Jams_19 = weeksum19_JAM_nf / sum(weeksum19_JAM_nf, na.rm=T),
            WoY_Weight_Crash_19 = weeksum19_ACCIDENT_nf / sum(weeksum19_ACCIDENT_nf, na.rm=T),
            
@@ -100,7 +100,7 @@ week_index_calcs <- nw %>%
     pct_ch_from_2020bl_week_crash = 100 *  ( (weeksum20_ACCIDENT_nf - bl2020_mean_ACCIDENT_nf) / bl2020_mean_ACCIDENT_nf )
     
   ) %>%
-  group_by(week) %>%
+  group_by(year, week) %>%
   summarize(
     
     weekly_sum_20_jam = sum(weeksum20_JAM_nf, na.rm = T),
@@ -139,13 +139,37 @@ write.csv(week_index_calcs, file = file.path(drive.output, 'Weekly_Covid_Outputs
 # first_week = paste('2020', '01', formatC(1:7, width = 2, flag = '0'), sep = '-')
 # first_week = strptime(first_week, format = '%Y-%m-%d')
 # first_Sunday = first_week[wday(first_week, label = TRUE, abbr = FALSE) == 'Sunday']
-first_Sunday = strptime('2019-12-29', format = '%Y-%m-%d')
+# first_Sunday = strptime('2019-12-29', format = '%Y-%m-%d')
+# 
+# first_Saturday = first_Sunday + 6 * (60*60*24) # because date-time objects are measured in seconds
+# 
+# week_ending_date = as.Date(first_Saturday + ((week_index_calcs$week -1 ) * 7 * (60*60*24)))
+# 
+# week_index_calcs$week_ending_date = week_ending_date
 
-first_Saturday = first_Sunday + 6 * (60*60*24) # because date-time objects are measured in seconds
+# Above worked only for single year, now take new approach for 2020 - present day
 
-week_ending_date = as.Date(first_Saturday + ((week_index_calcs$week -1 ) * 7 * (60*60*24)))
+# look for leap years
+days_in_year_20 = ifelse(lubridate::days_in_month('2020-02-01') == 29, 366, 365)
+days_in_year_21 = ifelse(lubridate::days_in_month('2021-02-01') == 29, 366, 365)
 
-week_index_calcs$week_ending_date = week_ending_date
+dates = c(paste('2020', formatC(1:days_in_year_20, width = 2, flag = '0'), sep = '-'),
+          paste('2021', formatC(1:days_in_year_21, width = 2, flag = '0'), sep = '-'))
+
+dates = strptime(dates, '%Y-%j')
+week = lubridate::epiweek(dates)
+weeklookup = data.frame(dates, year = format(dates, '%Y'), week)
+
+week_end_date = weeklookup %>% 
+  mutate(weekchange = week - lead(week)) %>% 
+  filter(weekchange != 0) %>%
+  select(-weekchange) %>%
+  mutate(year = as.numeric(year),
+         week = as.numeric(week)) %>%
+  rename(week_ending_date = dates)
+
+week_index_calcs = week_index_calcs %>% 
+  left_join(week_end_date)
 
 # For each week, calculate the following at the time of that week
 
@@ -158,32 +182,34 @@ week_index_calcs$week_ending_date = week_ending_date
 
 
 # Below is code to just calculate one row, the latest week
+this_year = format(Sys.Date(), '%Y')
 
 output_table = week_index_calcs %>%
+  filter(year == this_year) %>%
   filter(week == max(week)) %>% 
   select(week, week_ending_date, weekly_sum_20_jam, weekly_sum_19_jam, change_from_19_jam)
 
 lowest = week_index_calcs %>%
-  filter(week >= 10) %>%  
+  filter(week >= 10 & year == '2020') %>%  
   filter(weekly_sum_20_jam == min(weekly_sum_20_jam)) %>%
   select(week, weekly_sum_20_jam) %>%
-  rename(week_of_lowest = week, 
+  rename(year_of_lowest = year,
+         week_of_lowest = week, 
          lowest_weekly_sum_20_jam = weekly_sum_20_jam)
 
 peak = week_index_calcs %>%
   filter(week >= lowest$week_of_lowest) %>%
   filter(weekly_sum_20_jam == max(weekly_sum_20_jam)) %>%
   select(week, weekly_sum_20_jam) %>%
-  rename(week_of_peak = week, 
+  rename(year_of_peak = year,
+         week_of_peak = week, 
          peak_weekly_sum_20_jam = weekly_sum_20_jam)
-
 
 output = data.frame(output_table, lowest, peak)
 
-write.table(output, file = file.path(drive.output, 'Output_for_BTS_National.csv'), 
+write.table(output, file = file.path(drive.output, 'Output_for_BTS_National_2021.csv'), 
             row.names = F, col.names = F, 
             sep = ",", qmethod = "double", append = T)
-
 
 # Sanity checks ----
 

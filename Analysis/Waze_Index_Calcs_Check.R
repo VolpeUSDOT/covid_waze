@@ -73,11 +73,11 @@ nw <- nw %>%
 # WoY_Weight_Crash_bl: 0.29436261
 # WoY_Weight_Crash_lag1: 0.31452333
 
-ca_6 <- nw %>% filter(state == 'CA'  & week == '6') %>%
+ca_6 <- nw %>% filter(state == 'CA'  & week == '6' & year == '2020') %>%
   select(weeksum19_ACCIDENT, bl2020_mean_ACCIDENT, lag1_weeksum20_ACCIDENT)
 
 # and totals 
-total_6 <- nw %>% filter(week == '6') %>%
+total_6 <- nw %>% filter(week == '6' & year == '2020') %>%
   summarize(sum(weeksum19_ACCIDENT, na.rm = T), 
             sum(bl2020_mean_ACCIDENT, na.rm = T),
             sum(lag1_weeksum20_ACCIDENT, na.rm = T))

@@ -82,6 +82,10 @@ for(file in get_files){
 
 source('Analysis/Waze_Index_Calcs_Check.R')
 
+# Add week of year to MSA day file
+
+source('Analysis/Add_week_of_year.R')
+
 # Replace files on Volpe shared drive for Tableau ----
 
 # Too slow. Just copy manually. 

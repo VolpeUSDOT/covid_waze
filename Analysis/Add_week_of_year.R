@@ -31,4 +31,4 @@ d_MSA_day %>%
   filter(year == '2021' & grepl('Detroit', CBSA.Title)) %>%
   select(CBSA.Title, date, year, count_ACCIDENT, week)
 
-write.csv(d_MSA_day, file = file.path(local_dir, 'Waze_MSA_day_w_week.csv'), row.names = F)
+write.csv(d_MSA_day, file = file.path(local_dir, 'Waze_2020_MSA_day.csv'), row.names = F)

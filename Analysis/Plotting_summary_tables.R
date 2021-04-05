@@ -7,7 +7,7 @@ library(egg)
 input.loc = 'Data'
 output.loc = 'Output'
 
-latest_refresh_day = max(dir('Output')[grep('2020-', dir('Output'))]) # e.g. '2020-05-06'
+latest_refresh_day = max(dir('Output')[grep(format(Sys.Date(), '%Y'), dir('Output'))]) # e.g. '2020-05-06'
 
 df <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_Covid_joined.csv'),
                    col_types = cols(cases = col_double(),

@@ -14,7 +14,9 @@ library(readr)
 input.loc = 'Data'
 output.loc = 'Output'
 
-latest_refresh_day = max(dir('Output')[grep('2020-', dir('Output'))]) # e.g. '2020-05-06'
+refresh_days = dir('Output')[grep(format(Sys.Date(), '%Y'), dir('Output'))] # e.g. '2020-05-06'
+latest_refresh_day = max(as.Date(refresh_days[!grepl('.zip', refresh_days)]))
+
 
 d_full <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_Full.csv'),
                    col_types = cols(cases = col_double(),
@@ -76,6 +78,11 @@ co_date_count_full <- d_full %>%
 
 ggplot(co_date_count_full, aes(x = date, y = total_Waze_count)) + 
   geom_line()
+
+ggplot(co_date_count_full, aes(x = date, y = total_Waze_count)) + 
+  geom_line() +
+  xlim(as.Date(c('2021-03-01', '2021-04-05')))
+
 
 # Last 10 days
 co_date_count_full[(nrow(co_date_count_full)-10):nrow(co_date_count_full),]

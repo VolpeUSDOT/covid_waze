@@ -81,7 +81,7 @@ ggplot(co_date_count_full, aes(x = date, y = total_Waze_count)) +
 
 ggplot(co_date_count_full, aes(x = date, y = total_Waze_count)) + 
   geom_line() +
-  xlim(as.Date(c('2021-03-01', '2021-04-05')))
+  xlim(as.Date(c('2021-01-01', '2021-04-05')))
 
 
 # Last 10 days

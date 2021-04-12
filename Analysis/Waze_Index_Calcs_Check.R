@@ -190,17 +190,19 @@ output_table = week_index_calcs %>%
   select(week, week_ending_date, weekly_sum_20_jam, weekly_sum_19_jam, change_from_19_jam)
 
 lowest = week_index_calcs %>%
-  filter(week >= 10 & year == '2020') %>%  
+  filter((week >= 10 & year == '2020') | year == '2021') %>%  
+  ungroup() %>%
   filter(weekly_sum_20_jam == min(weekly_sum_20_jam)) %>%
-  select(week, weekly_sum_20_jam) %>%
+  select(year, week, weekly_sum_20_jam) %>%
   rename(year_of_lowest = year,
          week_of_lowest = week, 
          lowest_weekly_sum_20_jam = weekly_sum_20_jam)
 
 peak = week_index_calcs %>%
-  filter(week >= lowest$week_of_lowest) %>%
+  ungroup() %>%
+  filter((week >= lowest$week_of_lowest & year == '2020') | year == '2021') %>%
   filter(weekly_sum_20_jam == max(weekly_sum_20_jam)) %>%
-  select(week, weekly_sum_20_jam) %>%
+  select(year, week, weekly_sum_20_jam) %>%
   rename(year_of_peak = year,
          week_of_peak = week, 
          peak_weekly_sum_20_jam = weekly_sum_20_jam)

@@ -311,3 +311,47 @@ ggplot(cass_19_20, aes(x = day_of_month, y = count, color = year)) +
   facet_wrap(.~ alert_type) +
   ggtitle('Cass County, ND, comparing 2019 and 2020 alert counts in October')
 
+
+# ND April 2021 issue ----
+
+
+# Check North Dakota October 2020 issue ----
+d_ex <- d %>% 
+  filter(state == 'ND')
+
+ggplot(d_ex, aes(x = date, y = count_ACCIDENT+count_WEATHERHAZARD+count_JAM)) + geom_line()
+
+# Check in full
+ggplot(d_full %>% filter(state == 'ND' & date > '2021-04-01'), 
+       aes(x = date, y = count)) +
+  geom_line() +
+  facet_wrap(.~ alert_type)
+
+ggplot(d_full %>% filter(state == 'ND' & date > '2021-04-01' & alert_type == 'WEATHERHAZARD' &
+                           fips %in% c('38017', '38059')), 
+       aes(x = date, y = count)) +
+  geom_line()+
+  facet_wrap(.~ fips)
+
+# Look at 2019 vs 2021 for Cass County, ND
+cass_19 = d_full %>% filter(state == 'ND' & 
+                              date >= '2019-04-01' &
+                              date <= '2019-04-30' &
+                              fips %in% c('38017')) 
+
+cass_21 = d_full %>% filter(state == 'ND' & 
+                              date >= '2021-04-01' &
+                              date <= '2021-04-30' &
+                              fips %in% c('38017')) 
+
+cass_19_21 <- rbind(cass_19, cass_21)
+
+cass_19_21 = cass_19_21 %>%
+  mutate(year = as.factor(year),
+         day_of_month = as.numeric(format(date, '%d')))
+
+ggplot(cass_19_21, aes(x = day_of_month, y = count, color = year)) +
+  geom_line(size = 2)+
+  facet_wrap(.~ alert_type) +
+  ggtitle('Cass County, ND, comparing 2019 and 2021 alert counts in April')
+

@@ -64,10 +64,10 @@ d %>% dplyr::select(CBSA.Code, date, count_ACCIDENT, change_crash, count_JAM, ch
   filter(grepl('Philadelphia', d$CBSA.Title))
 
 
-co_date_count_full <- d_full %>%
-  group_by(fips, date, state, county) %>%
-  summarize(total_Waze_count = sum(count, na.rm = T),
-            count_NA = sum(is.na(count)))
+# co_date_count_full <- d_full %>%
+#   group_by(fips, date, state, county) %>%
+#   summarize(total_Waze_count = sum(count, na.rm = T),
+#             count_NA = sum(is.na(count)))
 
 
 co_date_count_full <- d_full %>%
@@ -76,13 +76,13 @@ co_date_count_full <- d_full %>%
   summarize(total_Waze_count = sum(count, na.rm = T),
             count_NA = sum(is.na(count)))
 
+gp <- ggplot(co_date_count_full, aes(x = date, y = total_Waze_count)) + 
+  geom_line() +
+  xlim(as.Date(c('2021-01-01', Sys.Date())))
+plotly::ggplotly(gp)
+
 ggplot(co_date_count_full, aes(x = date, y = total_Waze_count)) + 
   geom_line()
-
-ggplot(co_date_count_full, aes(x = date, y = total_Waze_count)) + 
-  geom_line() +
-  xlim(as.Date(c('2021-01-01', '2021-04-05')))
-
 
 # Last 10 days
 co_date_count_full[(nrow(co_date_count_full)-10):nrow(co_date_count_full),]

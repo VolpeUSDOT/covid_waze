@@ -18,9 +18,9 @@ refresh_days = dir('Output')[grep(format(Sys.Date(), '%Y'), dir('Output'))] # e.
 latest_refresh_day = max(as.Date(refresh_days[!grepl('.zip', refresh_days)]))
 
 
-d_full <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_Full.csv'),
-                   col_types = cols(cases = col_double(),
-                                    deaths = col_double()))    
+d_full <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_Full.csv'))#,
+#                   col_types = cols(cases = col_double(),
+#                                    deaths = col_double()))    
 
 # d <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_Index_cleaned.csv'),
 #               col_types = cols(cases = col_double(),
@@ -81,11 +81,14 @@ gp <- ggplot(co_date_count_full, aes(x = date, y = total_Waze_count)) +
   xlim(as.Date(c('2021-01-01', Sys.Date())))
 plotly::ggplotly(gp)
 
+
+# Last 10 days
+tail(co_date_count_full, 10)
+
+
 ggplot(co_date_count_full, aes(x = date, y = total_Waze_count)) + 
   geom_line()
 
-# Last 10 days
-co_date_count_full[(nrow(co_date_count_full)-10):nrow(co_date_count_full),]
 
 # Assess completeness ---- 
 

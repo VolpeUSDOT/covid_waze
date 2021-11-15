@@ -37,6 +37,16 @@ d_MSA_day <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_MSA_d
                                    bl2020_mean_WEATHERHAZARD = col_double()
                                    ))
 
+
+# Validate epiweek -- this is correct
+# d_MSA_day %>%
+#   filter(year == '2020' & week > 51 & grepl('Detroit', CBSA.Title)) %>%
+#   select(CBSA.Title, date, year, count_ACCIDENT, week)
+# 
+# d_MSA_day %>%
+#   filter(year == '2021' & grepl('Detroit', CBSA.Title)) %>%
+#   select(CBSA.Title, date, year, count_ACCIDENT, week)
+
 # Weekly MSA
 
 d_MSA_week <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_MSA_week.csv'),
@@ -72,17 +82,17 @@ nw <- nw %>%
 # WoY_Weight_Crash_19: 0.33808351
 # WoY_Weight_Crash_bl: 0.29436261
 # WoY_Weight_Crash_lag1: 0.31452333
-
-ca_6 <- nw %>% filter(state == 'CA'  & week == '6' & year == '2020') %>%
-  select(weeksum19_ACCIDENT, bl2020_mean_ACCIDENT, lag1_weeksum20_ACCIDENT)
-
-# and totals 
-total_6 <- nw %>% filter(week == '6' & year == '2020') %>%
-  summarize(sum(weeksum19_ACCIDENT, na.rm = T), 
-            sum(bl2020_mean_ACCIDENT, na.rm = T),
-            sum(lag1_weeksum20_ACCIDENT, na.rm = T))
-
-ca_6 / total_6 # checks out
+# 
+# ca_6 <- nw %>% filter(state == 'CA'  & week == '6' & year == '2020') %>%
+#   select(weeksum19_ACCIDENT, bl2020_mean_ACCIDENT, lag1_weeksum20_ACCIDENT)
+# 
+# # and totals 
+# total_6 <- nw %>% filter(week == '6' & year == '2020') %>%
+#   summarize(sum(weeksum19_ACCIDENT, na.rm = T), 
+#             sum(bl2020_mean_ACCIDENT, na.rm = T),
+#             sum(lag1_weeksum20_ACCIDENT, na.rm = T))
+# 
+# ca_6 / total_6 # checks out
 
 # First calculate the percent changes for *each* state, each week
 # Then use the weights, calculated above, to produce a weighted mean of the state-wise percent changes at the national level, by week
@@ -232,5 +242,3 @@ ggplot(nw_sum, aes(x = week, y = Total_Waze_20)) + geom_line()
 ggplot(nw_sum, aes(x = week, y = cra)) + geom_line()
 
 ggplot(nw_sum, aes(x = week, y = weh)) + geom_line()
-
-

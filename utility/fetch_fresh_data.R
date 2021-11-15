@@ -58,6 +58,7 @@ get_files = c('Waze_2020_MSA_day.csv',
               'Waze_2020_National_week.csv',
               paste0('Waze_Covid_joined_', Sys.Date(), '.csv'))
 
+
 for(file in get_files){
   
   if(grepl(Sys.Date(), file)){
@@ -81,10 +82,6 @@ for(file in get_files){
 # Produce weekly index calculations ----
 
 source('Analysis/Waze_Index_Calcs_Check.R')
-
-# Add week of year to MSA day file
-
-source('Analysis/Add_week_of_year.R')
 
 # Replace files on Volpe shared drive for Tableau ----
 

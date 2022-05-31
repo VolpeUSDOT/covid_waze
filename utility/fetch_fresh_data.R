@@ -47,6 +47,7 @@ reticulate::source_python(file = file.path(path.expand(code_loc),
             'utility',
            'auto_export_waze.py'))
 
+Sys.Date()
 system(
   paste0('aws --profile sdc-token s3 ls ', auto_export_bucket, Sys.Date(), '/'))
 

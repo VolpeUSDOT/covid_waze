@@ -47,6 +47,11 @@ d_MSA_day <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_MSA_d
 #   filter(year == '2021' & grepl('Detroit', CBSA.Title)) %>%
 #   select(CBSA.Title, date, year, count_ACCIDENT, week)
 
+# Week numbering updates:
+# If in January and week is > 4, then use the previous year as the 'year' variable
+# This is because we want to use the 'year' in which the week numbering began, not the year of the date itself for purpose of joining with the weekly values
+
+
 # Weekly MSA
 
 d_MSA_week <- read_csv(file.path(output.loc, latest_refresh_day, 'Waze_2020_MSA_week.csv'),
@@ -162,9 +167,11 @@ write.csv(week_index_calcs, file = file.path(drive.output, 'Weekly_Covid_Outputs
 # look for leap years
 days_in_year_20 = ifelse(lubridate::days_in_month('2020-02-01') == 29, 366, 365)
 days_in_year_21 = ifelse(lubridate::days_in_month('2021-02-01') == 29, 366, 365)
+days_in_year_22 = ifelse(lubridate::days_in_month('2022-02-01') == 29, 366, 365)
 
 dates = c(paste('2020', formatC(1:days_in_year_20, width = 2, flag = '0'), sep = '-'),
-          paste('2021', formatC(1:days_in_year_21, width = 2, flag = '0'), sep = '-'))
+          paste('2021', formatC(1:days_in_year_21, width = 2, flag = '0'), sep = '-'),
+          paste('2022', formatC(1:days_in_year_21, width = 2, flag = '0'), sep = '-'))
 
 dates = strptime(dates, '%Y-%j')
 week = lubridate::epiweek(dates)

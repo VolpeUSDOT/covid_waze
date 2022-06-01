@@ -7,7 +7,7 @@
 # See https://rstudio.github.io/reticulate/articles/python_packages.html
 
 
-library(reticulate)
+library(reticulate) # help set up python environment in R
 
 # First time: Install the conda environment with necessary packages
 
@@ -15,11 +15,8 @@ if(!dir.exists(
       file.path(dirname(path.expand('~/')),
               'AppData', 'Local', 'r-miniconda'))) {
   conda_create('r-reticulate')
-  conda_install('requests')
   conda_install(envname = 'r-reticulate', packages = c('requests', 'configparser'))
   }
-
-use_virtualenv("r-reticulate")
 
 # Setup the paths to work in
 
@@ -27,29 +24,30 @@ auto_export_bucket = 's3://prod-sdc-waze-autoexport-004118380849/alert/'
 
 volpe_drive = '//vntscex.local/DFS/Projects/PROJ-OS62A1/SDI Waze Phase 2/Output/COVID'
 
-code_loc = '~/git/covid_waze'
-local_dir = file.path(code_loc, 'Output', Sys.Date())
+use_date = Sys.Date()#  -1 
+
+
+local_dir = file.path('Output', use_date)
 
 if (!dir.exists(local_dir)) {
-  dir.create(local_dir) 
+  dir.create(local_dir, recursive = T) 
   }
 
 # Fetch data by refreshing token in Python using Reticulate ----
 
-if(!file.exists(file.path(path.expand(code_loc),
+if(!file.exists(file.path(path.expand(getwd()),
                           'utility',
                           'auto_export_waze.py'))){
   stop('Contact sdc-support@dot.gov to set up auto-export permissions and be given the appropriate authentication script.')
 }
 
 # Refresh credentials 
-reticulate::source_python(file = file.path(path.expand(code_loc),
+reticulate::source_python(file = file.path(path.expand(getwd()),
             'utility',
            'auto_export_waze.py'))
 
-Sys.Date()
 system(
-  paste0('aws --profile sdc-token s3 ls ', auto_export_bucket, Sys.Date(), '/'))
+  paste0('aws --profile sdc-token s3 ls ', auto_export_bucket, use_date, '/')) # review the file directory of the folder in SDC bucket.
 
 # Files to get
 
@@ -57,12 +55,12 @@ get_files = c('Waze_2020_MSA_day.csv',
               'Waze_2020_MSA_week.csv',
               'Waze_2020_National_day.csv',
               'Waze_2020_National_week.csv',
-              paste0('Waze_Covid_joined_', Sys.Date(), '.csv'))
+              paste0('Waze_Covid_joined_', use_date, '.csv'))
 
 
 for(file in get_files){
   
-  if(grepl(Sys.Date(), file)){
+  if(grepl(use_date, file)){
     out_file = 'Waze_Full.csv'
   } else {
     out_file = file
@@ -71,7 +69,7 @@ for(file in get_files){
   system(
     paste0('aws --profile sdc-token s3 cp ', 
            auto_export_bucket, 
-           Sys.Date(), '/',
+           use_date, '/',
            file,
            ' ',
            path.expand(local_dir), '/',

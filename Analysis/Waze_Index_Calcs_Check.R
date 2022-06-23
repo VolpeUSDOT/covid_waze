@@ -181,7 +181,7 @@ week_end_date = weeklookup %>%
   mutate(weekchange = week - lead(week)) %>% 
   filter(weekchange != 0) %>%
   select(-weekchange) %>%
-  mutate(year = as.numeric(year),
+  mutate(year = as.numeric(as.character(year)),
          week = as.numeric(week)) %>%
   rename(week_ending_date = dates)
 

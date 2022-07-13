@@ -6,8 +6,11 @@
 # C:/Users/{user.name}/AppData/Local/r-miniconda, or you can choose another version of Python installed. See miniconda_path().
 # See https://rstudio.github.io/reticulate/articles/python_packages.html
 
+rm(list = ls())
 
 library(reticulate) # help set up python environment in R
+library(ggplot2)
+library(tidyverse)
 
 # First time: Install the conda environment with necessary packages
 
@@ -24,8 +27,9 @@ auto_export_bucket = 's3://prod-sdc-waze-autoexport-004118380849/alert/'
 
 volpe_drive = '//vntscex.local/DFS/Projects/PROJ-OS62A1/SDI Waze Phase 2/Output/COVID'
 
+#use_date = as.Date("2022-07-11")
 use_date = Sys.Date()#  -1 
-
+cat(as.character(use_date))
 
 local_dir = file.path('Output', use_date)
 
@@ -77,6 +81,11 @@ for(file in get_files){
   )
   }
 
+# examine the data to see if the data is full.
+all <- read.csv(file.path(local_dir, 'Waze_Full.csv'))
+ct <- all %>% mutate(date= as.Date(date)) %>% ungroup() %>% group_by(date) %>% summarize(total_count = n(), sum_waze_counts = sum(count, na.rm = T))
+gp <- ggplot(ct, aes(x = date, y = sum_waze_counts)) + geom_line() + xlim(Sys.Date() - 60, Sys.Date())
+plotly::ggplotly(gp)
 
 # Produce weekly index calculations ----
 

@@ -19,7 +19,7 @@ input.loc = 'Data'
 output.loc = 'Output'
 
 drive.output = '//vntscex.local/DFS/Projects/PROJ-OS62A1/SDI Waze Phase 2/Data/COVID'
-
+#latest_refresh_day = as.Date("2022-06-25")
 latest_refresh_day = max(dir('Output')[grep(format(Sys.Date(), '%Y'), dir('Output'))]) # e.g. '2020-05-06'
 
 cat(latest_refresh_day)
@@ -203,11 +203,11 @@ this_year = format(Sys.Date(), '%Y')
 
 output_table = week_index_calcs %>%
   filter(year == this_year) %>%
-  filter(week == max(week)) %>% 
+  filter(week == max(week)) %>%  
   select(week, week_ending_date, weekly_sum_20_jam, weekly_sum_19_jam, change_from_19_jam)
 
 lowest = week_index_calcs %>%
-  filter((week >= 10 & year == '2020') | year == '2021') %>%  
+  filter((week >= 10 & year == '2020') | year %in% c('2021', '2022', '2023')) %>%
   ungroup() %>%
   filter(weekly_sum_20_jam == min(weekly_sum_20_jam)) %>%
   select(year, week, weekly_sum_20_jam) %>%
@@ -217,7 +217,7 @@ lowest = week_index_calcs %>%
 
 peak = week_index_calcs %>%
   ungroup() %>%
-  filter((week >= lowest$week_of_lowest & year == '2020') | year == '2021') %>%
+  filter((week >= lowest$week_of_lowest & year == '2020') | year %in% c('2021', '2022', '2023')) %>%
   filter(weekly_sum_20_jam == max(weekly_sum_20_jam)) %>%
   select(year, week, weekly_sum_20_jam) %>%
   rename(year_of_peak = year,

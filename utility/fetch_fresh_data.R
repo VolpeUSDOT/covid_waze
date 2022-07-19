@@ -81,11 +81,11 @@ for(file in get_files){
   )
   }
 
-# examine the data to see if the data is full.
-all <- read.csv(file.path(local_dir, 'Waze_Full.csv'))
-ct <- all %>% mutate(date= as.Date(date)) %>% ungroup() %>% group_by(date) %>% summarize(total_count = n(), sum_waze_counts = sum(count, na.rm = T))
-gp <- ggplot(ct, aes(x = date, y = sum_waze_counts)) + geom_line() + xlim(Sys.Date() - 60, Sys.Date())
-plotly::ggplotly(gp)
+##### examine the data to see if the data is full.
+#all <- read.csv(file.path(local_dir, 'Waze_Full.csv'))
+#ct <- all %>% mutate(date= as.Date(date)) %>% ungroup() %>% group_by(date) %>% summarize(total_count = n(), sum_waze_counts = sum(count, na.rm = T))
+#gp <- ggplot(ct, aes(x = date, y = sum_waze_counts)) + geom_line() + xlim(Sys.Date() - 60, Sys.Date())
+#plotly::ggplotly(gp)
 
 # Produce weekly index calculations ----
 

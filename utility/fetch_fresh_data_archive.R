@@ -6,15 +6,13 @@
 # C:/Users/{user.name}/AppData/Local/r-miniconda, or you can choose another version of Python installed. See miniconda_path().
 # See https://rstudio.github.io/reticulate/articles/python_packages.html
 
-### Set up ----
 rm(list = ls())
 
 library(reticulate) # help set up python environment in R
 library(ggplot2)
 library(tidyverse)
 
-## Conda environment configuration
-# If this is the first time, the script below will install the conda environment with necessary packages
+# First time: Install the conda environment with necessary packages
 
 if(!dir.exists(
       file.path(dirname(path.expand('~/')),
@@ -23,7 +21,7 @@ if(!dir.exists(
   conda_install(envname = 'r-reticulate', packages = c('requests', 'configparser'))
   }
 
-## Setup the paths to work in
+# Setup the paths to work in
 
 auto_export_bucket = 's3://prod-sdc-waze-autoexport-004118380849/alert/'
 
@@ -39,7 +37,7 @@ if (!dir.exists(local_dir)) {
   dir.create(local_dir, recursive = T) 
   }
 
-### Fetch data by refreshing token in Python using Reticulate ----
+# Fetch data by refreshing token in Python using Reticulate ----
 
 if(!file.exists(file.path(path.expand(getwd()),
                           'utility',
@@ -83,7 +81,34 @@ for(file in get_files){
   )
   }
 
+##### examine the data to see if the data is complete
+#all <- read.csv(file.path(local_dir, 'Waze_Full.csv'))
+#ct <- all %>% mutate(date= as.Date(date)) %>% ungroup() %>% group_by(date) %>% summarize(total_count = n(), sum_waze_counts = sum(count, na.rm = T))
+#gp <- ggplot(ct, aes(x = date, y = sum_waze_counts)) + geom_line() + xlim(Sys.Date() - 60, Sys.Date())
+#plotly::ggplotly(gp)
 
-### Produce weekly index calculations ----
+# Produce weekly index calculations ----
 
 source('Analysis/Waze_Index_Calcs_Check.R')
+
+# Replace files on Volpe shared drive for Tableau ----
+
+# Too slow. Just copy manually. 
+# # Check to see if on the VPN 
+# if(dir.exists(volpe_drive)){
+#   
+#   for(file in get_files){
+#     print(paste('Copying', file))
+#     
+#     file.copy(from = file.path(path.expand(local_dir), file),
+#               to = file.path(volpe_drive, file),
+#               overwrite = TRUE)
+#     
+#     print('... done \n')
+#     }
+#   
+#   } else {
+#   
+#     print('Connect to VPN and verify access to Volpe shared drive')
+#   
+#   }
